@@ -142,7 +142,7 @@ body {
 .benefit-block:first-child { margin-top: 0; }
 .benefit-label { font-size: 12px; font-weight: 800; color: var(--text-strong); margin-bottom: 10px; }
 
-.foundation-block { margin-top: 16px; border: 1px solid var(--border); }
+.foundation-block { margin: 16px auto 0; max-width: 340px; border: 1px solid var(--border); }
 .foundation-photo { display: block; width: 100%; height: auto; }
 .foundation-link {
   display: block;
@@ -151,6 +151,7 @@ body {
   border-top: 1px solid var(--border);
   font-size: 12px; font-weight: 700; color: var(--accent);
   text-decoration: none;
+  text-align: center;
 }
 .foundation-link:hover { color: var(--accent-hover); }
 
