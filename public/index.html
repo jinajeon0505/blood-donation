@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>헌혈 신청하기</title>
+  <title>10th 헥토& 단체헌혈 캠페인</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,18 +14,95 @@
     <div class="header-title">10th 헥토& 단체헌혈 캠페인</div>
     <div class="header-sub">2026년 8월 31일(월) ~ 9월 1일(화) · 태광타워 앞 헌혈버스</div>
   </div>
+  <nav class="header-nav">
+    <button class="nav-link active" id="nav-btn-about"   onclick="showTab('about')">헌혈로 만드는 좋은 변화</button>
+    <button class="nav-link"        id="nav-btn-travel"  onclick="showTab('travel')">헌혈 가능 여부 확인</button>
+    <button class="nav-link"        id="nav-btn-reserve" onclick="showTab('reserve')">헌혈 신청</button>
+    <button class="nav-link"        id="nav-btn-lookup"  onclick="showTab('lookup')">신청내역 조회 및 변경</button>
+  </nav>
 </header>
 
 <div class="container">
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tab-btn-reserve" onclick="showTab('reserve')">신청하기</button>
-    <button class="tab-btn" id="tab-btn-lookup" onclick="showTab('lookup')">신청 조회 / 수정</button>
-    <button class="tab-btn" id="tab-btn-travel" onclick="showTab('travel')">여행지역 확인</button>
-  </div>
+  <!-- ===== 헌혈로 만드는 좋은 변화 탭 ===== -->
+  <div id="tab-about">
+    <div class="about-intro">
+      <h1 class="about-title">10th 헥토& 단체헌혈 캠페인</h1>
+      <p class="about-desc">HECTO&(앤드)는 헥토와 함께 이어가는 '생명을 잇는 나눔' 캠페인입니다.<br>열 번째 헥토그룹 사회공헌 프로젝트에 함께해 주세요.</p>
+    </div>
 
-  <!-- ===== 신청하기 탭 ===== -->
-  <div id="tab-reserve">
+    <!-- 01 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-num">01</span>
+        <span class="impact-card-title">헌혈로 생명을 나눠요</span>
+      </div>
+      <div class="impact-card-sub">한 번의 헌혈로 최대 3명에게 도움</div>
+      <p class="impact-card-body">헌혈한 혈액은 적혈구·혈소판·혈장 등 필요한 혈액성분으로 나뉘어 환자의 치료에 사용될 수 있습니다.</p>
+      <div class="impact-equation">1번의 헌혈 &nbsp;=&nbsp; 최대 3명에게 도움</div>
+      <div class="msg" style="background:var(--surface);color:var(--text-muted);border-color:var(--border);margin:0">혈소판은 보관기간이 단 5일로 매우 짧아 꾸준한 헌혈이 꼭 필요합니다.</div>
+    </div>
+
+    <!-- 02 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-num">02</span>
+        <span class="impact-card-title">헌혈증으로 나눔을 이어가요</span>
+      </div>
+      <div class="impact-card-sub">헌혈증 한 장도 소아암 환아에게 큰 힘이 됩니다</div>
+      <ul class="dot-list">
+        <li>소아암 치료는 평균 2~3년의 긴 시간이 필요하며, 한 아이에게 수십 장에서 100~300장 이상의 헌혈증이 필요할 수 있습니다.</li>
+        <li>헌혈증은 수혈 비용(본인부담금)을 공제받는 데 사용되어 가정의 경제적 부담을 크게 줄여줍니다.</li>
+        <li>혈액형과 상관없이, 오래된 헌혈증도 유효기간 없이 모두 사용할 수 있습니다.</li>
+      </ul>
+      <p style="font-size:11px;color:var(--text-faint);font-weight:600;margin-top:10px">* 헌혈증 전달: 한국소아암재단을 통해 소아암 환아 및 병원으로 전달됩니다.</p>
+    </div>
+
+    <!-- 03 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-num">03</span>
+        <span class="impact-card-title">참여 혜택도 챙겨요</span>
+      </div>
+      <div class="impact-card-sub">참여하시는 모든 분들께 감사의 마음을 전합니다</div>
+
+      <div class="benefit-block">
+        <div class="benefit-label">헌혈 참여 시 · 대한적십자사 헌혈 기념품 2개 선택 (중복 가능)</div>
+        <div class="reward-grid">
+          <div class="reward-item"><span>디지털콘텐츠 이용권</span><span class="rv">티빙&웨이브 1개월</span></div>
+          <div class="reward-item"><span>햄버거 교환권</span><span class="rv">5,000원</span></div>
+          <div class="reward-item"><span>편의점 교환권</span><span class="rv">5,000원</span></div>
+          <div class="reward-item"><span>여행용 세트</span><span class="rv">LG생활건강</span></div>
+          <div class="reward-item"><span>손톱깎이 세트</span><span class="rv">쓰리세븐</span></div>
+          <div class="reward-item"><span>커피 교환권</span><span class="rv">5,500원</span></div>
+          <div class="reward-item"><span>도킹형 보조배터리</span><span class="rv">5,000mAh</span></div>
+          <div class="reward-item"><span>문화 기프트카드 교환권</span><span class="rv">5,000원</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--text-faint);font-weight:600;margin-top:8px">기념품 대신 5,000원 상당을 기부하는 <strong>헌혈기부권</strong>으로 교차 선택도 가능합니다.</p>
+      </div>
+
+      <div class="benefit-block">
+        <div class="benefit-label">헌혈증 기부 시</div>
+        <div class="reward-item">
+          <span>헥토헬스케어 오투부스터 프레시 증정</span>
+          <a class="rv" href="https://www.desimone.co.kr/goods/view?no=3347" target="_blank" rel="noopener noreferrer">제품 보기 ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="card cta-banner">
+      <div class="cta-text">
+        <div class="cta-title">헌혈하고, 헌혈증까지 기부하면<br><strong>나눔은 한 번 더 이어집니다.</strong></div>
+        <p class="cta-sub">생명을 위한 헌혈에 참여하고, 헌혈증 기부로 소아암 환아의 치료에도 힘을 보태주세요.</p>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:0 28px" onclick="showTab('reserve')">헌혈 신청하기 →</button>
+    </div>
+    <p style="font-size:11px;color:var(--text-faint);font-weight:500;text-align:center;margin-top:-6px">※ 기념품 재고 상황에 따라 조기 소진될 수 있습니다. 헌혈자분의 양해 부탁드립니다.</p>
+  </div><!-- /tab-about -->
+
+  <!-- ===== 헌혈 신청 탭 ===== -->
+  <div id="tab-reserve" style="display:none">
 
     <!-- 단계 표시 -->
     <div class="steps" id="steps-indicator">
@@ -52,17 +129,6 @@
       <div class="card">
         <div class="card-title">날짜를 선택하세요</div>
         <div class="date-select-grid" id="date-grid"></div>
-      </div>
-
-      <div class="card info-card">
-        <div class="card-title">헌혈 전 확인해주세요</div>
-        <ul>
-          <li>신분증(사진 부착)을 반드시 지참해주세요.</li>
-          <li>전날 충분한 수면과 식사를 하고 참여해주세요.</li>
-          <li>체온·혈압·체중 등 헌혈 전 검사 결과에 따라 헌혈이 제한될 수 있어요.</li>
-          <li>최근 헌혈 이력에 따라 회복 기간이 지나지 않았다면 참여가 어려울 수 있어요.</li>
-          <li>헌혈증은 단체 기부함에 자발적으로 기부하거나 개별 보관할 수 있어요.</li>
-        </ul>
       </div>
     </div>
 
@@ -111,7 +177,7 @@
         <div class="confirm-box">
           <div class="ci">✓</div>
           <div class="ct">신청이 완료되었습니다!</div>
-          <div style="font-size:13px;color:var(--text-muted);font-weight:500">취소·수정은 <strong>신청 조회/수정</strong> 탭에서 팀과 이름으로 조회하세요</div>
+          <div style="font-size:13px;color:var(--text-muted);font-weight:500">취소·수정은 <strong>신청내역 조회 및 변경</strong> 메뉴에서 팀과 이름으로 조회하세요</div>
         </div>
         <div class="detail-table" id="done-detail"></div>
         <button class="btn btn-primary" onclick="resetApplication()" style="margin-top:12px">+ 새 신청하기</button>
@@ -120,7 +186,7 @@
 
   </div><!-- /tab-reserve -->
 
-  <!-- ===== 조회 탭 ===== -->
+  <!-- ===== 신청내역 조회 및 변경 탭 ===== -->
   <div id="tab-lookup" style="display:none">
     <div class="card">
       <div class="card-title">신청 조회</div>
@@ -144,8 +210,19 @@
     <div id="lookup-results"></div>
   </div><!-- /tab-lookup -->
 
-  <!-- ===== 여행지역 확인 탭 ===== -->
+  <!-- ===== 헌혈 가능 여부 확인 탭 ===== -->
   <div id="tab-travel" style="display:none">
+    <div class="card info-card">
+      <div class="card-title">헌혈 전 확인해주세요</div>
+      <ul>
+        <li>신분증(사진 부착)을 반드시 지참해주세요.</li>
+        <li>전날 충분한 수면과 식사를 하고 참여해주세요.</li>
+        <li>체온·혈압·체중 등 헌혈 전 검사 결과에 따라 헌혈이 제한될 수 있어요.</li>
+        <li>최근 헌혈 이력에 따라 회복 기간이 지나지 않았다면 참여가 어려울 수 있어요.</li>
+        <li>헌혈증은 단체 기부함에 자발적으로 기부하거나 개별 보관할 수 있어요.</li>
+      </ul>
+    </div>
+
     <div class="card">
       <div class="card-title">여행/체류 지역 확인</div>
       <p style="font-size:13px;color:var(--text-muted);font-weight:500;margin-bottom:16px;line-height:1.6">

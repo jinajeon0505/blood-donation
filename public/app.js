@@ -38,13 +38,13 @@ async function fetchSlots() {
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────
+const TAB_KEYS = ['about', 'travel', 'reserve', 'lookup'];
 function showTab(tab) {
-  document.getElementById('tab-reserve').style.display = tab === 'reserve' ? '' : 'none';
-  document.getElementById('tab-lookup').style.display  = tab === 'lookup'  ? '' : 'none';
-  document.getElementById('tab-travel').style.display  = tab === 'travel'  ? '' : 'none';
-  document.getElementById('tab-btn-reserve').classList.toggle('active', tab === 'reserve');
-  document.getElementById('tab-btn-lookup').classList.toggle('active',  tab === 'lookup');
-  document.getElementById('tab-btn-travel').classList.toggle('active',  tab === 'travel');
+  TAB_KEYS.forEach(k => {
+    document.getElementById(`tab-${k}`).style.display = k === tab ? '' : 'none';
+    document.getElementById(`nav-btn-${k}`).classList.toggle('active', k === tab);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   if (tab === 'lookup') {
     document.getElementById('lookup-err').style.display = 'none';
     document.getElementById('lookup-results').innerHTML = '';
