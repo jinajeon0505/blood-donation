@@ -17,14 +17,19 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS applications (
       id         BIGINT PRIMARY KEY,
       code       VARCHAR(8) UNIQUE NOT NULL,
-      date       VARCHAR(10) NOT NULL,
-      time       VARCHAR(5) NOT NULL,
+      date       VARCHAR(10),
+      time       VARCHAR(5),
       company    TEXT NOT NULL,
       team       TEXT NOT NULL,
       name       TEXT NOT NULL,
+      type       VARCHAR(10) NOT NULL DEFAULT 'group',
       created_at VARCHAR(19) NOT NULL
     )
   `);
+  // 기존 테이블 마이그레이션 (컬럼이 이미 있으면 무시됨)
+  await pool.query(`ALTER TABLE applications ADD COLUMN IF NOT EXISTS type VARCHAR(10) NOT NULL DEFAULT 'group'`);
+  await pool.query(`ALTER TABLE applications ALTER COLUMN date DROP NOT NULL`);
+  await pool.query(`ALTER TABLE applications ALTER COLUMN time DROP NOT NULL`);
 }
 
 // ── 상수 ──────────────────────────────────────────────────────────────
@@ -60,7 +65,7 @@ function generateCode(existingCodes) {
 // ── API: 슬롯 현황 ────────────────────────────────────────────────────
 app.get('/api/slots', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT date, time FROM applications');
+    const { rows } = await pool.query("SELECT date, time FROM applications WHERE type='group'");
     const slots = {};
     VALID_DATES.forEach(date => {
       slots[date] = {};
@@ -77,23 +82,31 @@ app.get('/api/slots', async (req, res) => {
 
 // ── API: 신청 생성 ────────────────────────────────────────────────────
 app.post('/api/applications', async (req, res) => {
-  const { date, time, company, team, name } = req.body;
-  const err = validate(date, time);
-  if (err) return res.status(400).json({ error: err });
+  const { company, team, name } = req.body;
+  const type = req.body.type === 'individual' ? 'individual' : 'group';
+  const date = type === 'group' ? req.body.date : null;
+  const time = type === 'group' ? req.body.time : null;
+
+  if (type === 'group') {
+    const err = validate(date, time);
+    if (err) return res.status(400).json({ error: err });
+  }
   if (!company?.trim() || !team?.trim() || !name?.trim())
     return res.status(400).json({ error: '모든 정보를 입력해주세요.' });
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const { rows: cnt } = await client.query(
-      'SELECT COUNT(*) FROM applications WHERE date=$1 AND time=$2',
-      [date, time]
-    );
-    const extraPost = EXTRA_COUNTS.find(e => e.date === date && e.time === time)?.extra ?? 0;
-    if (parseInt(cnt[0].count) + extraPost >= MAX_PER_SLOT) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ error: '해당 슬롯이 마감되었습니다.' });
+    if (type === 'group') {
+      const { rows: cnt } = await client.query(
+        'SELECT COUNT(*) FROM applications WHERE date=$1 AND time=$2 AND type=\'group\'',
+        [date, time]
+      );
+      const extraPost = EXTRA_COUNTS.find(e => e.date === date && e.time === time)?.extra ?? 0;
+      if (parseInt(cnt[0].count) + extraPost >= MAX_PER_SLOT) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: '해당 슬롯이 마감되었습니다.' });
+      }
     }
     const { rows: existing } = await client.query('SELECT code FROM applications');
     const existingCodes = new Set(existing.map(r => r.code));
@@ -104,8 +117,8 @@ app.post('/api/applications', async (req, res) => {
     const id = Date.now();
     const created_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
     await client.query(
-      'INSERT INTO applications (id,code,date,time,company,team,name,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
-      [id, code, date, time, company.trim(), team.trim(), name.trim(), created_at]
+      'INSERT INTO applications (id,code,date,time,company,team,name,type,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [id, code, date, time, company.trim(), team.trim(), name.trim(), type, created_at]
     );
     await client.query('COMMIT');
     res.json({ id, code });
@@ -159,29 +172,32 @@ app.put('/api/applications/:code', async (req, res) => {
       return res.status(404).json({ error: '신청 내역을 찾을 수 없습니다.' });
     }
     const cur = rows[0];
-    const date    = req.body.date    ?? cur.date;
-    const time    = req.body.time    ?? cur.time;
     const company = (req.body.company ?? cur.company).trim();
     const team    = (req.body.team    ?? cur.team).trim();
     const name    = (req.body.name    ?? cur.name).trim();
-
-    const err = validate(date, time);
-    if (err) { await client.query('ROLLBACK'); return res.status(400).json({ error: err }); }
     if (!company || !team || !name) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: '모든 정보를 입력해주세요.' });
     }
 
-    const slotChanged = date !== cur.date || time !== cur.time;
-    if (slotChanged) {
-      const { rows: cnt } = await client.query(
-        'SELECT COUNT(*) FROM applications WHERE date=$1 AND time=$2 AND code!=$3',
-        [date, time, code]
-      );
-      const extraPut = EXTRA_COUNTS.find(e => e.date === date && e.time === time)?.extra ?? 0;
-      if (parseInt(cnt[0].count) + extraPut >= MAX_PER_SLOT) {
-        await client.query('ROLLBACK');
-        return res.status(409).json({ error: '해당 슬롯이 마감되었습니다.' });
+    let date = cur.date, time = cur.time;
+    if (cur.type === 'group') {
+      date = req.body.date ?? cur.date;
+      time = req.body.time ?? cur.time;
+      const err = validate(date, time);
+      if (err) { await client.query('ROLLBACK'); return res.status(400).json({ error: err }); }
+
+      const slotChanged = date !== cur.date || time !== cur.time;
+      if (slotChanged) {
+        const { rows: cnt } = await client.query(
+          'SELECT COUNT(*) FROM applications WHERE date=$1 AND time=$2 AND code!=$3 AND type=\'group\'',
+          [date, time, code]
+        );
+        const extraPut = EXTRA_COUNTS.find(e => e.date === date && e.time === time)?.extra ?? 0;
+        if (parseInt(cnt[0].count) + extraPut >= MAX_PER_SLOT) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ error: '해당 슬롯이 마감되었습니다.' });
+        }
       }
     }
 

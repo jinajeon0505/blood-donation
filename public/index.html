@@ -139,45 +139,77 @@
     <div class="steps" id="steps-indicator">
       <div class="step active" data-step="1">
         <div class="step-circle">1</div>
-        <div class="step-label">날짜</div>
+        <div class="step-label">유형</div>
       </div>
       <div class="step" data-step="2">
         <div class="step-circle">2</div>
-        <div class="step-label">시간</div>
+        <div class="step-label">날짜</div>
       </div>
       <div class="step" data-step="3">
         <div class="step-circle">3</div>
-        <div class="step-label">정보입력</div>
+        <div class="step-label">시간</div>
       </div>
       <div class="step" data-step="4">
+        <div class="step-circle">4</div>
+        <div class="step-label">정보입력</div>
+      </div>
+      <div class="step" data-step="5">
         <div class="step-circle">✓</div>
         <div class="step-label">완료</div>
       </div>
     </div>
 
-    <!-- Step 1: 날짜 선택 -->
+    <!-- Step 1: 신청 유형 선택 -->
     <div id="step-1">
       <div class="card">
-        <div class="card-title">날짜를 선택하세요</div>
-        <div class="date-select-grid" id="date-grid"></div>
+        <div class="card-title">신청 방법을 선택하세요</div>
+        <div class="type-grid">
+          <button class="type-card" onclick="selectAppType('group', this)">
+            <div class="type-card-title">단체헌혈 예약</div>
+            <div class="type-card-sub">지정된 날짜·시간에<br>헌혈버스에서 참여</div>
+          </button>
+          <button class="type-card" onclick="selectAppType('individual', this)">
+            <div class="type-card-title">개별헌혈 후 헌혈증 기부</div>
+            <div class="type-card-sub">일정이 맞지 않으면<br>개별 헌혈 후 헌혈증만 등록</div>
+          </button>
+        </div>
+      </div>
+      <div class="card info-card">
+        <div class="card-title">개별헌혈이란?</div>
+        <ul>
+          <li>컨디션 난조나 일정이 맞지 않아 단체헌혈 참여가 어려운 경우를 위한 방법이에요.</li>
+          <li>가까운 헌혈의집·헌혈카페에서 개별적으로 헌혈하신 뒤, 헌혈증을 캠페인 기간 내 제출·기부해주세요.</li>
+          <li>날짜·시간 선택 없이 소속과 이름만 등록하면 신청이 완료돼요.</li>
+        </ul>
       </div>
     </div>
 
-    <!-- Step 2: 시간 선택 -->
+    <!-- Step 2: 날짜 선택 -->
     <div id="step-2" style="display:none">
-      <div class="sel-summary" id="sum-2"></div>
       <div class="card">
-        <div class="card-title">시간을 선택하세요</div>
-        <div class="time-grid" id="time-grid"></div>
+        <div class="card-title">날짜를 선택하세요</div>
+        <div class="date-select-grid" id="date-grid"></div>
       </div>
       <div class="nav-btns">
         <button class="btn btn-secondary" onclick="goStep(1)">← 이전</button>
       </div>
     </div>
 
-    <!-- Step 3: 정보 입력 -->
+    <!-- Step 3: 시간 선택 -->
     <div id="step-3" style="display:none">
       <div class="sel-summary" id="sum-3"></div>
+      <div class="card">
+        <div class="card-title">시간을 선택하세요</div>
+        <div class="time-grid" id="time-grid"></div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn btn-secondary" onclick="goStep(2)">← 이전</button>
+      </div>
+    </div>
+
+    <!-- Step 4: 정보 입력 -->
+    <div id="step-4" style="display:none">
+      <div class="sel-summary" id="sum-4"></div>
       <div class="card">
         <div class="card-title">신청자 정보를 입력하세요</div>
         <div id="form-err" class="msg msg-error" style="display:none"></div>
@@ -198,12 +230,12 @@
         <button class="btn btn-primary" onclick="submitApplication()">신청하기 →</button>
       </div>
       <div class="nav-btns">
-        <button class="btn btn-secondary" onclick="goStep(2)">← 이전</button>
+        <button class="btn btn-secondary" id="step4-back-btn" onclick="goStep(3)">← 이전</button>
       </div>
     </div>
 
-    <!-- Step 4: 완료 -->
-    <div id="step-4" style="display:none">
+    <!-- Step 5: 완료 -->
+    <div id="step-5" style="display:none">
       <div class="card">
         <div class="confirm-box">
           <div class="ci">✓</div>

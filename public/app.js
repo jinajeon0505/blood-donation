@@ -15,7 +15,7 @@ const COMPANIES = [
   '헥토미디어', '헥토큐앤엠', '헥토월렛원', '드림베이',
 ];
 
-const S = { step: 1, date: null, time: null, slots: null };
+const S = { step: 1, date: null, time: null, slots: null, appType: null };
 
 // ── Init ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -255,9 +255,19 @@ function goStep(n) {
   S.step = n;
   document.getElementById(`step-${n}`).style.display = '';
   updateStepIndicator();
-  if (n === 1) fetchSlots().then(() => renderDateGrid());
-  if (n === 2) { fetchSlots().then(() => renderTimeGrid()); renderSummary(2); }
-  if (n === 3) renderSummary(3);
+  if (n === 2) fetchSlots().then(() => renderDateGrid());
+  if (n === 3) { fetchSlots().then(() => renderTimeGrid()); renderSummary(3); }
+  if (n === 4) {
+    renderSummary(4);
+    document.getElementById('step4-back-btn').onclick = () => goStep(S.appType === 'group' ? 3 : 1);
+  }
+}
+
+function selectAppType(type, el) {
+  S.appType = type;
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  setTimeout(() => goStep(type === 'group' ? 2 : 4), 280);
 }
 
 function updateStepIndicator() {
@@ -270,16 +280,20 @@ function updateStepIndicator() {
 
 function renderSummary(step) {
   const chips = [];
-  if (S.date) {
-    const d = DATES.find(d => d.value === S.date);
-    if (d) chips.push(`${d.month}/${d.day} (${d.dow})`);
+  if (S.appType === 'individual') {
+    chips.push('개별헌혈 후 헌혈증 기부');
+  } else {
+    if (S.date) {
+      const d = DATES.find(d => d.value === S.date);
+      if (d) chips.push(`${d.month}/${d.day} (${d.dow})`);
+    }
+    if (S.time) chips.push(S.time);
   }
-  if (S.time) chips.push(S.time);
   const el = document.getElementById(`sum-${step}`);
   if (el) el.innerHTML = chips.map(c => `<span class="sel-chip">${c}</span>`).join('');
 }
 
-// ── Step 1: Date ──────────────────────────────────────────────────────
+// ── Step 2: Date ──────────────────────────────────────────────────────
 function renderDateGrid() {
   const grid = document.getElementById('date-grid');
   grid.innerHTML = '';
@@ -300,12 +314,12 @@ function renderDateGrid() {
       <div class="dsc-date">${d.day}일 (${d.dow})</div>
       <div class="dsc-avail ${availCls}">${availText}</div>`;
     if (isBlocked || totalAvail === 0) btn.disabled = true;
-    else btn.onclick = () => { S.date = d.value; goStep(2); };
+    else btn.onclick = () => { S.date = d.value; goStep(3); };
     grid.appendChild(btn);
   });
 }
 
-// ── Step 2: Time ──────────────────────────────────────────────────────
+// ── Step 3: Time ──────────────────────────────────────────────────────
 function renderTimeGrid() {
   const grid = document.getElementById('time-grid');
   grid.innerHTML = '';
@@ -333,12 +347,12 @@ function renderTimeGrid() {
       <div class="tv">${time}</div>
       <div class="seat-dots">${dots}</div>
       <div class="ta">${label}</div>`;
-    if (!isFull) btn.onclick = () => { S.time = time; goStep(3); };
+    if (!isFull) btn.onclick = () => { S.time = time; goStep(4); };
     grid.appendChild(btn);
   });
 }
 
-// ── Step 3: Submit ────────────────────────────────────────────────────
+// ── Step 4: Submit ────────────────────────────────────────────────────
 async function submitApplication() {
   const company = document.getElementById('inp-company').value;
   const team    = document.getElementById('inp-team').value.trim();
@@ -352,11 +366,14 @@ async function submitApplication() {
     return;
   }
 
+  const body = { company, team, name, type: S.appType };
+  if (S.appType === 'group') { body.date = S.date; body.time = S.time; }
+
   try {
     const res = await fetch('/api/applications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: S.date, time: S.time, company, team, name }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
 
@@ -376,30 +393,40 @@ async function submitApplication() {
 }
 
 function showConfirm(code, info) {
-  const d = DATES.find(d => d.value === S.date);
+  const rows = S.appType === 'individual'
+    ? [
+        ['신청 유형', '개별헌혈 후 헌혈증 기부'],
+        ['소속 회사', info.company],
+        ['소속 부서(팀)', info.team],
+        ['이름', info.name],
+      ]
+    : (() => {
+        const d = DATES.find(d => d.value === S.date);
+        return [
+          ['날짜', d ? `${d.month}/${d.day} (${d.dow})` : S.date],
+          ['시간', S.time],
+          ['소속 회사', info.company],
+          ['소속 부서(팀)', info.team],
+          ['이름', info.name],
+        ];
+      })();
   document.getElementById('done-detail').innerHTML = `
     <div style="text-align:center;padding:16px 0 4px">
       <div class="dl" style="display:block;margin-bottom:4px">신청 코드</div>
       <div class="code-display">${code}</div>
-    </div>` + detailRows([
-    ['날짜', d ? `${d.month}/${d.day} (${d.dow})` : S.date],
-    ['시간', S.time],
-    ['소속 회사', info.company],
-    ['소속 부서(팀)', info.team],
-    ['이름', info.name],
-  ]);
-  goStep(4);
+    </div>` + detailRows(rows);
+  goStep(5);
 }
 
 function resetApplication() {
-  S.step = 1; S.date = null; S.time = null;
+  S.step = 1; S.date = null; S.time = null; S.appType = null;
   document.getElementById('inp-company').value = '';
   ['inp-team', 'inp-name'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('form-err').style.display = 'none';
-  for (let i = 2; i <= 4; i++) document.getElementById(`step-${i}`).style.display = 'none';
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  for (let i = 2; i <= 5; i++) document.getElementById(`step-${i}`).style.display = 'none';
   document.getElementById('step-1').style.display = '';
   updateStepIndicator();
-  fetchSlots().then(() => renderDateGrid());
 }
 
 // ── Lookup ────────────────────────────────────────────────────────────
@@ -448,22 +475,32 @@ function renderLookupResults(list) {
   }
 
   list.forEach(r => {
-    const d    = DATES.find(d => d.value === r.date);
+    const isIndividual = r.type === 'individual';
+    const d = DATES.find(d => d.value === r.date);
     const wrap = document.createElement('div');
     wrap.id = `result-wrap-${r.code}`;
+
+    const infoRows = isIndividual
+      ? [
+          ['신청 유형', '개별헌혈 후 헌혈증 기부'],
+          ['소속 회사', r.company],
+          ['소속 부서(팀)', r.team],
+          ['이름', r.name],
+        ]
+      : [
+          ['날짜', d ? `${d.month}/${d.day} (${d.dow})` : r.date],
+          ['시간', r.time],
+          ['소속 회사', r.company],
+          ['소속 부서(팀)', r.team],
+          ['이름', r.name],
+        ];
 
     // 결과 카드
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
       <div class="card-title">신청 정보</div>
-      <div class="detail-table">${detailRows([
-        ['날짜', d ? `${d.month}/${d.day} (${d.dow})` : r.date],
-        ['시간', r.time],
-        ['소속 회사', r.company],
-        ['소속 부서(팀)', r.team],
-        ['이름', r.name],
-      ])}</div>
+      <div class="detail-table">${detailRows(infoRows)}</div>
       <div class="nav-btns" style="margin-top:16px">
         <button class="btn btn-secondary" onclick="openEditForm('${r.code}')">수정</button>
         <button class="btn btn-danger"    onclick="confirmCancel('${r.code}')">취소</button>
@@ -473,13 +510,7 @@ function renderLookupResults(list) {
     wrap.appendChild(card);
 
     // 수정 폼 (카드 아래 숨김)
-    const editCard = document.createElement('div');
-    editCard.className = 'card';
-    editCard.id = `edit-${r.code}`;
-    editCard.style.display = 'none';
-    editCard.innerHTML = `
-      <div class="card-title">신청 수정</div>
-      <div id="edit-err-${r.code}" class="msg msg-error" style="display:none"></div>
+    const dateTimeFields = isIndividual ? '' : `
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">날짜</label>
@@ -489,7 +520,16 @@ function renderLookupResults(list) {
           <label class="form-label">시간</label>
           <select class="form-input" id="et-${r.code}"></select>
         </div>
-      </div>
+      </div>`;
+
+    const editCard = document.createElement('div');
+    editCard.className = 'card';
+    editCard.id = `edit-${r.code}`;
+    editCard.style.display = 'none';
+    editCard.innerHTML = `
+      <div class="card-title">신청 수정</div>
+      <div id="edit-err-${r.code}" class="msg msg-error" style="display:none"></div>
+      ${dateTimeFields}
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">소속 회사</label>
@@ -552,13 +592,15 @@ async function openEditForm(code) {
   document.getElementById(`eteam-${code}`).value = r.team;
   document.getElementById(`en-${code}`).value = r.name;
 
-  updateEditDateSelect(code, origDate);
-  updateEditTimeSelect(code, origDate, origDate, origTime);
+  if (r.type !== 'individual') {
+    updateEditDateSelect(code, origDate);
+    updateEditTimeSelect(code, origDate, origDate, origTime);
 
-  document.getElementById(`ed-${code}`).onchange = () => {
-    const date = document.getElementById(`ed-${code}`).value;
-    updateEditTimeSelect(code, date, origDate, origTime);
-  };
+    document.getElementById(`ed-${code}`).onchange = () => {
+      const date = document.getElementById(`ed-${code}`).value;
+      updateEditTimeSelect(code, date, origDate, origTime);
+    };
+  }
 
   document.getElementById(`edit-${code}`).style.display = '';
   document.getElementById(`edit-${code}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -599,13 +641,14 @@ async function submitEdit(code) {
   const errEl = document.getElementById(`edit-err-${code}`);
   errEl.style.display = 'none';
 
+  const dateEl = document.getElementById(`ed-${code}`);
+  const timeEl = document.getElementById(`et-${code}`);
   const body = {
-    date:    document.getElementById(`ed-${code}`).value,
-    time:    document.getElementById(`et-${code}`).value,
     company: document.getElementById(`ec-${code}`).value,
     team:    document.getElementById(`eteam-${code}`).value.trim(),
     name:    document.getElementById(`en-${code}`).value.trim(),
   };
+  if (dateEl && timeEl) { body.date = dateEl.value; body.time = timeEl.value; }
 
   if (!body.company || !body.team || !body.name) {
     errEl.textContent = '모든 항목을 입력해주세요.';

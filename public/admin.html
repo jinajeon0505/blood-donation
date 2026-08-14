@@ -41,6 +41,15 @@
     tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: var(--surface); }
 
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      font-size: 11px; font-weight: 800;
+      border: 1px solid;
+    }
+    .badge-loc1 { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .badge-loc2 { color: var(--text-muted); border-color: var(--border); background: var(--surface); }
+
     .code-cell {
       font-family: var(--font-mono);
       letter-spacing: 2px; font-weight: 800; font-size: 13px;
@@ -123,6 +132,10 @@
       <div class="stat-label">잔여 좌석</div>
       <div class="stat-value" id="stat-avail">—</div>
     </div>
+    <div class="stat-card c2">
+      <div class="stat-label">개별헌혈</div>
+      <div class="stat-value" id="stat-individual">—</div>
+    </div>
   </div>
 
   <!-- 슬롯 현황 -->
@@ -152,6 +165,7 @@
       <table id="res-table">
         <thead>
           <tr>
+            <th>구분</th>
             <th>날짜</th>
             <th>시간</th>
             <th>소속 회사</th>
@@ -201,11 +215,13 @@ function renderStats() {
   const total = allApplications.length;
   const d1 = allApplications.filter(r => r.date === DATES[0].value).length;
   const d2 = allApplications.filter(r => r.date === DATES[1].value).length;
+  const individual = allApplications.filter(r => r.type === 'individual').length;
   const totalSlots = TIMES.length * DATES.length * MAX;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-d1').textContent  = d1;
   document.getElementById('stat-d2').textContent  = d2;
-  document.getElementById('stat-avail').textContent = totalSlots - total;
+  document.getElementById('stat-avail').textContent = totalSlots - (total - individual);
+  document.getElementById('stat-individual').textContent = individual;
 }
 
 function renderSlotGrid() {
@@ -244,16 +260,18 @@ function renderTable(rows) {
   document.getElementById('filtered-count').textContent = `총 ${rows.length}건`;
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">신청 내역이 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">신청 내역이 없습니다.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = rows.map(r => {
+    const isIndividual = r.type === 'individual';
     const d = DATES.find(d => d.value === r.date);
     const created = r.created_at ? r.created_at.replace('T', ' ').substring(0, 16) : '';
     return `<tr>
-      <td>${d?.label ?? r.date}</td>
-      <td><strong>${r.time}</strong></td>
+      <td>${isIndividual ? '<span class="badge badge-loc2">개별</span>' : '<span class="badge badge-loc1">단체</span>'}</td>
+      <td>${isIndividual ? '-' : (d?.label ?? r.date)}</td>
+      <td><strong>${isIndividual ? '-' : r.time}</strong></td>
       <td>${esc(r.company)}</td>
       <td>${esc(r.team)}</td>
       <td><strong>${esc(r.name)}</strong></td>
@@ -313,10 +331,16 @@ function exportCSV() {
   const date = document.getElementById('csv-date-sel').value;
   const d = DATES.find(d => d.value === date);
   const exportData = date ? allApplications.filter(r => r.date === date) : allApplications;
-  const rows = [['날짜','시간','소속회사','소속부서(팀)','이름','신청일시']];
+  const rows = [['구분','날짜','시간','소속회사','소속부서(팀)','이름','신청일시']];
   exportData.forEach(r => {
+    const isIndividual = r.type === 'individual';
     const rd = DATES.find(d => d.value === r.date);
-    rows.push([rd?.label ?? r.date, r.time, r.company, r.team, r.name, r.created_at ?? '']);
+    rows.push([
+      isIndividual ? '개별헌혈' : '단체헌혈',
+      isIndividual ? '-' : (rd?.label ?? r.date),
+      isIndividual ? '-' : r.time,
+      r.company, r.team, r.name, r.created_at ?? '',
+    ]);
   });
   const bom = '﻿';
   const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
