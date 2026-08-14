@@ -21,6 +21,15 @@ const S = { step: 1, date: null, time: null, slots: null };
 document.addEventListener('DOMContentLoaded', () => {
   fetchSlots().then(() => renderDateGrid());
   document.getElementById('inp-company').innerHTML = companyOptionsHtml();
+
+  const initial = TAB_KEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'about';
+  history.replaceState(null, '', '#' + initial);
+  renderTab(initial);
+});
+
+window.addEventListener('popstate', () => {
+  const tab = location.hash.slice(1);
+  if (TAB_KEYS.includes(tab)) renderTab(tab);
 });
 
 function companyOptionsHtml(selected) {
@@ -40,6 +49,11 @@ async function fetchSlots() {
 // ── Tabs ──────────────────────────────────────────────────────────────
 const TAB_KEYS = ['about', 'travel', 'reserve', 'lookup'];
 function showTab(tab) {
+  if (location.hash.slice(1) !== tab) history.pushState(null, '', '#' + tab);
+  renderTab(tab);
+}
+
+function renderTab(tab) {
   TAB_KEYS.forEach(k => {
     document.getElementById(`tab-${k}`).style.display = k === tab ? '' : 'none';
     document.getElementById(`nav-btn-${k}`).classList.toggle('active', k === tab);
