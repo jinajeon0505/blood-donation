@@ -22,14 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchSlots().then(() => renderDateGrid());
   document.getElementById('inp-company').innerHTML = companyOptionsHtml();
 
-  const initial = TAB_KEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'about';
-  history.replaceState(null, '', '#' + initial);
+  const initial = HASH_TO_TAB[location.hash.slice(1)] || 'about';
+  history.replaceState(null, '', '#' + TAB_TO_HASH[initial]);
   renderTab(initial);
 });
 
 window.addEventListener('popstate', () => {
-  const tab = location.hash.slice(1);
-  if (TAB_KEYS.includes(tab)) renderTab(tab);
+  const tab = HASH_TO_TAB[location.hash.slice(1)];
+  if (tab) renderTab(tab);
 });
 
 function companyOptionsHtml(selected) {
@@ -48,8 +48,11 @@ async function fetchSlots() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────
 const TAB_KEYS = ['about', 'travel', 'reserve', 'lookup'];
+const TAB_TO_HASH = { about: 'Impact', travel: 'check', reserve: 'reserve', lookup: 'manage' };
+const HASH_TO_TAB = { Impact: 'about', check: 'travel', reserve: 'reserve', manage: 'lookup' };
 function showTab(tab) {
-  if (location.hash.slice(1) !== tab) history.pushState(null, '', '#' + tab);
+  const hash = TAB_TO_HASH[tab];
+  if (location.hash.slice(1) !== hash) history.pushState(null, '', '#' + hash);
   renderTab(tab);
 }
 
