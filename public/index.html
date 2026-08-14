@@ -243,35 +243,159 @@
 
   <!-- ===== 헌혈 가능 여부 확인 탭 ===== -->
   <div id="tab-travel" style="display:none">
-    <div class="card info-card">
-      <div class="card-title">헌혈 전 확인해주세요</div>
-      <ul>
-        <li>신분증(사진 부착)을 반드시 지참해주세요.</li>
-        <li>전날 충분한 수면과 식사를 하고 참여해주세요.</li>
-        <li>체온·혈압·체중 등 헌혈 전 검사 결과에 따라 헌혈이 제한될 수 있어요.</li>
-        <li>최근 헌혈 이력에 따라 회복 기간이 지나지 않았다면 참여가 어려울 수 있어요.</li>
-        <li>헌혈증은 단체 기부함에 자발적으로 기부하거나 개별 보관할 수 있어요.</li>
-      </ul>
+    <div class="about-intro">
+      <h1 class="about-title">헌혈 전, 미리 확인해보세요</h1>
+      <p class="about-desc">여행, 약물 복용, 최근 헌혈 이력 등에 따라 헌혈 가능 여부가 달라질 수 있습니다.<br>해당되는 항목을 미리 확인하고 방문해주세요.</p>
     </div>
+    <div class="msg" style="background:var(--surface);color:var(--text-muted);border-color:var(--border);text-align:center">아래 내용은 사전 확인을 위한 안내이며, 최종 헌혈 가능 여부는 당일 문진 및 검사 결과에 따라 결정됩니다.</div>
 
-    <div class="card">
-      <div class="card-title">여행/체류 지역 확인</div>
-      <p style="font-size:13px;color:var(--text-muted);font-weight:500;margin-bottom:16px;line-height:1.6">
-        최근 다녀오신 국가나 국내 지역을 입력하면, 말라리아·vCJD(변종크로이츠펠트야콥병) 위험지역 해당 여부와 헌혈 제한 기준을 확인할 수 있어요.
-      </p>
+    <!-- 01 해외여행 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12l-6.5-2-4-6-1.7.6 2.4 6-5.2 1.4-2-1.6-1.5.4 1.4 3.2L2.5 15l1.5.4 2-1.6 5.2 1.4-2.4 6 1.7.6 4-6z" fill="var(--accent)"/>
+          </svg>
+        </span>
+        <span class="impact-head-text">
+          <span class="impact-step-label">01 · 해외여행</span>
+          <span class="impact-card-title">최근 해외여행을 다녀오셨나요?</span>
+        </span>
+      </div>
+      <p class="impact-card-body">방문 국가와 지역, 귀국일에 따라 일정 기간 헌혈이 제한될 수 있습니다. 최근 다녀오신 국가나 국내 지역을 입력해보세요.</p>
       <div class="form-group" style="margin-bottom:0">
         <label class="form-label">국가 / 지역명</label>
         <input type="text" class="form-input" id="travel-query" placeholder="예: 태국, 파주시, 영국" oninput="filterTravel()">
       </div>
+      <div id="travel-results"></div>
+      <div class="tip-box">
+        <div class="tip-box-title">알아두세요</div>
+        <ul class="dot-list">
+          <li>말라리아 위험지역 방문 후에는 최대 1년(거주·복무 시 3년)간 헌혈이 제한될 수 있어요.</li>
+          <li>위 지역 여부와 무관하게, 해외여행 후에는 귀국일로부터 4주가 지나야 헌혈할 수 있어요.</li>
+        </ul>
+        <p style="font-size:11px;color:var(--text-faint);font-weight:600;margin-top:8px">출처: 대한적십자사 헌혈정보(<a href="https://bloodinfo.net" target="_blank" rel="noopener noreferrer" style="color:inherit">bloodinfo.net</a>) · 헌혈 필수 안내문(2025)</p>
+      </div>
     </div>
-    <div id="travel-results"></div>
-    <div class="card info-card">
-      <div class="card-title">안내</div>
-      <ul>
-        <li>이 조회는 참고용이며, 최종 헌혈 가능 여부는 현장 문진 시 간호사가 확인합니다.</li>
-        <li>출처: 대한적십자사 혈액관리본부 헌혈 필수 안내문(2025)</li>
-      </ul>
+
+    <!-- 02 약물 복용·투여 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3.5" y="9.5" width="17" height="7" rx="3.5" transform="rotate(-45 12 12)" fill="var(--accent)"/>
+            <path d="M9 15L15 9" stroke="#FFD9C2" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="impact-head-text">
+          <span class="impact-step-label">02 · 약물 복용·투여</span>
+          <span class="impact-card-title">최근 복용하거나 투여한 약이 있나요?</span>
+        </span>
+      </div>
+      <p class="impact-card-body">위고비·마운자로 등 비만·당뇨 치료제를 포함해, 약물의 종류와 치료 상태에 따라 헌혈 가능 여부가 달라질 수 있습니다.</p>
+      <div class="msg" style="background:var(--accent-soft);color:var(--text-body);border-color:var(--accent);margin-bottom:16px">헌혈 당일 문진 시 약물명과 마지막 투여일을 알려주세요.</div>
+      <div class="benefit-label">대표 헌혈금지약물 · 복용 후 헌혈 제한기간</div>
+      <div class="reward-grid">
+        <div class="reward-item"><span>건선 치료제</span><span class="rv">영구~3년</span></div>
+        <div class="reward-item"><span>항악성종양(탈리도마이드 등)</span><span class="rv">24개월</span></div>
+        <div class="reward-item"><span>전립선비대증 치료제</span><span class="rv">4주~6개월</span></div>
+        <div class="reward-item"><span>탈모증·여드름 치료제</span><span class="rv">4주</span></div>
+        <div class="reward-item"><span>손습진 치료제</span><span class="rv">1개월</span></div>
+        <div class="reward-item"><span>항생제·스테로이드제(주사 포함)</span><span class="rv">1주</span></div>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);font-weight:600;margin-top:8px">위 목록 외에도 제한 약물이 있을 수 있어요. 정확한 기준은 헌혈 현장 문진 시 확인해주세요.</p>
     </div>
+
+    <!-- 03 최근 헌혈 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2.5C12 2.5 5.5 11.2 5.5 15.8C5.5 19.5 8.4 22 12 22C15.6 22 18.5 19.5 18.5 15.8C18.5 11.2 12 2.5 12 2.5Z" fill="var(--accent)"/>
+            <path d="M9 15.5C9 17.2 10.3 18.5 12 18.5" stroke="#FFD9C2" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="impact-head-text">
+          <span class="impact-step-label">03 · 최근 헌혈</span>
+          <span class="impact-card-title">최근에 헌혈하셨나요?</span>
+        </span>
+      </div>
+      <p class="impact-card-body">최근 헌혈일과 헌혈 종류에 따라 다음 헌혈 가능일이 달라집니다.</p>
+      <div class="donation-calc">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">최근 헌혈 종류</label>
+          <div class="radio-row">
+            <label class="radio-opt"><input type="radio" name="donation-type" value="56" checked onchange="calcNextDonation()"> 전혈</label>
+            <label class="radio-opt"><input type="radio" name="donation-type" value="14" onchange="calcNextDonation()"> 혈장</label>
+            <label class="radio-opt"><input type="radio" name="donation-type" value="14" onchange="calcNextDonation()"> 혈소판</label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">최근 헌혈일</label>
+          <input type="date" class="form-input" id="donation-date" onchange="calcNextDonation()">
+        </div>
+        <div class="donation-result" id="donation-result">
+          <div class="donation-result-label">다음 헌혈 가능일</div>
+          <div class="donation-result-value" id="donation-result-value">날짜를 선택해주세요</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);font-weight:600;margin-top:10px">헌혈간격 기준: 전혈 8주, 혈장·혈소판성분헌혈 14일 (출처: bloodinfo.net 헌혈 자격조건)</p>
+    </div>
+
+    <!-- 04 건강 상태 기타 -->
+    <div class="card impact-card">
+      <div class="impact-head">
+        <span class="impact-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3v7a5 5 0 0010 0V3" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="18.5" cy="16.5" r="3" fill="var(--accent)"/>
+            <circle cx="18.5" cy="16.5" r="1.1" fill="#FFD9C2"/>
+          </svg>
+        </span>
+        <span class="impact-head-text">
+          <span class="impact-step-label">04 · 건강 상태·기타</span>
+          <span class="impact-card-title">최근 치료나 시술을 받으셨나요?</span>
+        </span>
+      </div>
+      <div class="tag-grid">
+        <span class="tag-pill">예방접종</span>
+        <span class="tag-pill">치과치료</span>
+        <span class="tag-pill">수술·시술</span>
+        <span class="tag-pill">내시경·검사</span>
+        <span class="tag-pill">문신·피어싱</span>
+        <span class="tag-pill">임신·출산</span>
+        <span class="tag-pill">최근 질환·치료</span>
+      </div>
+      <div class="tip-box" style="margin-top:16px">
+        <p style="font-size:13px;color:var(--text-body);font-weight:600;line-height:1.6;margin-bottom:10px">위 항목에 해당하거나 현재 치료 중인 질환이 있다면 헌혈 가능 여부를 사전에 확인해주세요.</p>
+        <a class="btn btn-secondary" style="width:auto;display:inline-flex" href="https://bloodinfo.net/knrcbs/cm/cntnts/cntntsView.do?mi=1058&cntntsId=1081" target="_blank" rel="noopener noreferrer">전체 헌혈 자격조건 확인하기 ↗</a>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="card cta-banner">
+      <div class="cta-text">
+        <div class="cta-title">확인을 마치셨나요?</div>
+        <p class="cta-sub">당일 문진 및 검사 결과에 따라 최종 헌혈 가능 여부가 결정됩니다.</p>
+      </div>
+      <button class="btn btn-primary" style="width:auto;padding:0 28px" onclick="showTab('reserve')">헌혈 신청하기 →</button>
+    </div>
+
+    <div class="footer-info-grid">
+      <div class="footer-info-item">
+        <div class="footer-info-label">헌혈 자격 관련 문의</div>
+        <div class="footer-info-value">대한적십자사 고객센터 1600-3705</div>
+      </div>
+      <div class="footer-info-item">
+        <div class="footer-info-label">여행제한 국가 및 기간 안내</div>
+        <a class="footer-info-value" href="https://bloodinfo.net" target="_blank" rel="noopener noreferrer">bloodinfo.net 확인 ↗</a>
+      </div>
+      <div class="footer-info-item">
+        <div class="footer-info-label">헌혈의집 찾기</div>
+        <a class="footer-info-value" href="https://bloodinfo.net" target="_blank" rel="noopener noreferrer">가까운 헌혈의집 찾기 ↗</a>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text-faint);font-weight:500;text-align:center">※ 본 안내는 대한적십자사 헌혈정보(bloodinfo.net) 기준이며, 세부 기준은 수시로 변경될 수 있습니다.</p>
   </div><!-- /tab-travel -->
 
 </div><!-- /container -->

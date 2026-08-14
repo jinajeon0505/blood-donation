@@ -218,6 +218,20 @@ function zoneCardHtml(z) {
     </div>`;
 }
 
+// ── 최근 헌혈 → 다음 헌혈 가능일 계산 ───────────────────────────────────
+const DOW_KR = ['일', '월', '화', '수', '목', '금', '토'];
+function calcNextDonation() {
+  const dateVal = document.getElementById('donation-date').value;
+  const valueEl = document.getElementById('donation-result-value');
+  if (!dateVal) { valueEl.textContent = '날짜를 선택해주세요'; return; }
+
+  const days = +document.querySelector('input[name="donation-type"]:checked').value;
+  const last = new Date(dateVal + 'T00:00:00');
+  const next = new Date(last.getTime() + days * 86400000);
+  const label = `${next.getFullYear()}.${String(next.getMonth() + 1).padStart(2, '0')}.${String(next.getDate()).padStart(2, '0')} (${DOW_KR[next.getDay()]}) 부터`;
+  valueEl.textContent = label;
+}
+
 // ── Step Navigation ───────────────────────────────────────────────────
 function goStep(n) {
   document.getElementById(`step-${S.step}`).style.display = 'none';
