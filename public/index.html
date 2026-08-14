@@ -3,25 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>헌혈 신청하기</title>
+  <title>10th 헥토& 단체헌혈 캠페인</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="header">
-  <img class="header-logo" src="assets/logo-hecto-white.png" alt="Hecto">
-  <div class="header-text">
-    <div class="header-title">10th 헥토& 단체헌혈 캠페인</div>
-    <div class="header-sub">2026년 8월 31일(월) ~ 9월 1일(화) · 태광타워 앞 헌혈버스</div>
+<section class="hero">
+  <div class="hero-inner">
+    <img class="hero-logo" src="assets/logo-hecto-white.png" alt="Hecto">
+    <div class="hero-eyebrow">HECTO & CAMPAIGN</div>
+    <h1 class="hero-title">10th 헥토& 단체헌혈 캠페인</h1>
+    <p class="hero-desc">HECTO&(앤드)는 헥토와 함께 이어가는 '생명을 잇는 나눔' 캠페인입니다.<br>열 번째 헥토그룹 사회공헌 프로젝트에 함께해 주세요.</p>
+    <div class="hero-meta">
+      <span class="hero-meta-item">2026.08.31(월) ~ 09.01(화)</span>
+      <span class="hero-meta-item">태광타워 앞 헌혈버스</span>
+    </div>
   </div>
-</header>
+</section>
 
 <div class="container">
 
   <div class="tabs">
     <button class="tab-btn active" id="tab-btn-reserve" onclick="showTab('reserve')">신청하기</button>
-    <button class="tab-btn" id="tab-btn-lookup" onclick="showTab('lookup')">신청 조회 / 수정</button>
-    <button class="tab-btn" id="tab-btn-travel" onclick="showTab('travel')">여행지역 확인</button>
+    <button class="tab-btn" id="tab-btn-lookup" onclick="showTab('lookup')">신청 조회 및 수정</button>
+    <button class="tab-btn" id="tab-btn-travel" onclick="showTab('travel')">헌혈 신청 전 유의 사항</button>
   </div>
 
   <!-- ===== 신청하기 탭 ===== -->
@@ -52,17 +57,6 @@
       <div class="card">
         <div class="card-title">날짜를 선택하세요</div>
         <div class="date-select-grid" id="date-grid"></div>
-      </div>
-
-      <div class="card info-card">
-        <div class="card-title">헌혈 전 확인해주세요</div>
-        <ul>
-          <li>신분증(사진 부착)을 반드시 지참해주세요.</li>
-          <li>전날 충분한 수면과 식사를 하고 참여해주세요.</li>
-          <li>체온·혈압·체중 등 헌혈 전 검사 결과에 따라 헌혈이 제한될 수 있어요.</li>
-          <li>최근 헌혈 이력에 따라 회복 기간이 지나지 않았다면 참여가 어려울 수 있어요.</li>
-          <li>헌혈증은 단체 기부함에 자발적으로 기부하거나 개별 보관할 수 있어요.</li>
-        </ul>
       </div>
     </div>
 
@@ -144,8 +138,19 @@
     <div id="lookup-results"></div>
   </div><!-- /tab-lookup -->
 
-  <!-- ===== 여행지역 확인 탭 ===== -->
+  <!-- ===== 헌혈 신청 전 유의 사항 탭 ===== -->
   <div id="tab-travel" style="display:none">
+    <div class="card info-card">
+      <div class="card-title">헌혈 전 확인해주세요</div>
+      <ul>
+        <li>신분증(사진 부착)을 반드시 지참해주세요.</li>
+        <li>전날 충분한 수면과 식사를 하고 참여해주세요.</li>
+        <li>체온·혈압·체중 등 헌혈 전 검사 결과에 따라 헌혈이 제한될 수 있어요.</li>
+        <li>최근 헌혈 이력에 따라 회복 기간이 지나지 않았다면 참여가 어려울 수 있어요.</li>
+        <li>헌혈증은 단체 기부함에 자발적으로 기부하거나 개별 보관할 수 있어요.</li>
+      </ul>
+    </div>
+
     <div class="card">
       <div class="card-title">여행/체류 지역 확인</div>
       <p style="font-size:13px;color:var(--text-muted);font-weight:500;margin-bottom:16px;line-height:1.6">
