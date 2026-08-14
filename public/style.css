@@ -415,12 +415,66 @@ body {
 }
 .card { animation: fadeUp var(--duration-base) var(--ease) both; }
 
+/* ═══════════════════════════ TRAVEL ZONE CARD ═══════════════════════════ */
+.zone-card { padding: 0; overflow: hidden; }
+
+.zone-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px; font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.02em;
+}
+
+.zone-en { font-size: 12px; color: var(--text-faint); font-weight: 600; }
+.zone-region { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+
+.zone-grid { display: grid; grid-template-columns: 1fr 1fr; }
+
+.zone-panel { padding: 16px 20px; }
+.zone-panel + .zone-panel { border-left: 1px solid var(--border); }
+
+.zone-panel-risk    { background: var(--accent-soft); }
+.zone-panel-exclude { background: #EAFAF5; }
+.zone-panel-danger  { background: #FBEAEA; }
+
+.zone-panel-title {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 800;
+  color: var(--text-strong);
+  margin-bottom: 8px;
+}
+
+.zone-dot { width: 8px; height: 8px; flex-shrink: 0; }
+.zone-dot.risk   { background: var(--warning); }
+.zone-dot.ok     { background: var(--success); }
+.zone-dot.danger { background: var(--danger); }
+
+.zone-panel-body {
+  font-size: 13px; font-weight: 600; color: var(--text-body);
+  line-height: 1.6; margin-bottom: 6px;
+}
+
+.zone-panel-caption {
+  font-size: 11px; color: var(--text-muted); font-weight: 500; line-height: 1.5;
+}
+
+.zone-info-bar {
+  padding: 12px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted); font-weight: 500; line-height: 1.6;
+}
+
 /* ═══════════════════════════ RESPONSIVE ═══════════════════════════ */
 @media (max-width: 600px) {
   .time-grid  { grid-template-columns: repeat(2, 1fr); }
   .form-row   { grid-template-columns: 1fr; }
   .step-label { font-size: 10px; }
   .card       { padding: 18px; }
+  .zone-card  { padding: 0; }
+  .zone-grid  { grid-template-columns: 1fr; }
+  .zone-panel + .zone-panel { border-left: none; border-top: 1px solid var(--border); }
   .container  { padding: 18px 12px 56px; }
   .header     { padding: 0 16px; height: 60px; }
   .code-display { font-size: 19px; letter-spacing: 4px; padding: 10px 18px; }
