@@ -41,14 +41,80 @@ async function fetchSlots() {
 function showTab(tab) {
   document.getElementById('tab-reserve').style.display = tab === 'reserve' ? '' : 'none';
   document.getElementById('tab-lookup').style.display  = tab === 'lookup'  ? '' : 'none';
+  document.getElementById('tab-travel').style.display  = tab === 'travel'  ? '' : 'none';
   document.getElementById('tab-btn-reserve').classList.toggle('active', tab === 'reserve');
   document.getElementById('tab-btn-lookup').classList.toggle('active',  tab === 'lookup');
+  document.getElementById('tab-btn-travel').classList.toggle('active',  tab === 'travel');
   if (tab === 'lookup') {
     document.getElementById('lookup-err').style.display = 'none';
     document.getElementById('lookup-results').innerHTML = '';
     document.getElementById('lookup-team').value = '';
     document.getElementById('lookup-name').value = '';
   }
+}
+
+// ── 여행지역 확인 ─────────────────────────────────────────────────────
+const MALARIA_NOTE_TRAVEL   = '여행(연중 1일 이상~6개월 미만 숙박) 시 1년간 전혈헌혈·혈소판성분헌혈이 제한됩니다 (혈장성분헌혈만 가능).';
+const MALARIA_NOTE_RESIDENT = '거주 또는 복무(연중 6개월 이상) 시 3년간 전혈헌혈·혈소판성분헌혈이 제한됩니다 (혈장성분헌혈만 가능).';
+const DOMESTIC_NOTE = '1박 이상 숙박(거주·군복무 포함) 시 1년간 전혈헌혈·혈소판성분헌혈이 제한됩니다 (혈장성분헌혈만 가능). 해상에서만 숙박했고 지상에서 30km 이상 떨어진 경우는 예외입니다.';
+const VCJD_NOTE = '변종크로이츠펠트야콥병(vCJD) 위험지역입니다. 아래 기준 이상 체류하셨다면 영구적으로 헌혈이 제한됩니다.';
+
+function malariaNote(scope) {
+  return `${scope === '전지역' ? '국가 전지역이' : '국가 내 일부 지역이'} 말라리아 헌혈 제한지역입니다. ${MALARIA_NOTE_TRAVEL} (거주·복무 시 3년) ${scope === '일부지역' ? '정확한 해당 지역은 현장 문진 시 확인해주세요.' : ''}`;
+}
+
+const TRAVEL_ZONES = [
+  // 국내
+  { name: '파주시', group: '국내 · 경기', note: DOMESTIC_NOTE },
+  { name: '연천군', group: '국내 · 경기', note: DOMESTIC_NOTE },
+  { name: '강화군', group: '국내 · 인천', note: DOMESTIC_NOTE },
+  { name: '철원군', group: '국내 · 강원', note: DOMESTIC_NOTE },
+  { name: '북한',   group: '국내(북한, 백두산 제외 전지역)', note: '국외 헌혈기준을 준용합니다. ' + MALARIA_NOTE_TRAVEL + ' (거주·복무 시 3년)' },
+
+  // 해외 vCJD
+  { name: '영국', aliases: ['잉글랜드','스코틀랜드','웨일즈','북아일랜드','맨섬','지브롤터','채널제도','포클랜드섬'], group: 'vCJD 위험지역', note: VCJD_NOTE + ' 1980년~1996년 중 누적 3개월 이상 체류' },
+  { name: '프랑스', group: 'vCJD 위험지역', note: VCJD_NOTE + ' 1980년~2001년 중 누적 5년 이상 체류' },
+  { name: '아일랜드', group: 'vCJD 위험지역', note: VCJD_NOTE + ' 1980년~2001년 중 누적 5년 이상 체류' },
+
+  // 해외 말라리아 - 아메리카
+  { name: '가이아나', group: '해외 말라리아 · 아메리카(전지역)', note: malariaNote('전지역') },
+  { name: '아이티', group: '해외 말라리아 · 아메리카(전지역)', note: malariaNote('전지역') },
+  ...['과테말라','니카라과','도미니카공화국','멕시코','베네수엘라','볼리비아','브라질','수리남','에콰도르','온두라스','코스타리카','콜롬비아','파나마','페루','프랑스령 기아나']
+    .map(name => ({ name, group: '해외 말라리아 · 아메리카(일부지역)', note: malariaNote('일부지역') })),
+
+  // 해외 말라리아 - 아프리카
+  ...['가나','가봉','감비아','기니','기니비사우','나이지리아','남수단','니제르','라이베리아','르완다','마요트','말라위','말리','모리타니아','모잠비크','베냉','부룬디','부르키나파소','상투메프린시페','세네갈','소말리아','수단','시에라리온','앙골라','우간다','잠비아','적도기니','중앙아프리카공화국','지부티','짐바브웨','차드','카메룬','코모로','코트디부아르','콩고공화국','콩고민주공화국','토고']
+    .map(name => ({ name, group: '해외 말라리아 · 아프리카(전지역)', note: malariaNote('전지역') })),
+  ...['나미비아','남아프리카공화국','마다가스카르','보츠와나','에스와티니','에리트레아','에티오피아','케냐','탄자니아']
+    .map(name => ({ name, group: '해외 말라리아 · 아프리카(일부지역)', note: malariaNote('일부지역') })),
+
+  // 해외 말라리아 - 아시아/오세아니아
+  ...['바누아트','버마','미얀마','솔로몬제도','오만','인도']
+    .map(name => ({ name, group: '해외 말라리아 · 아시아/오세아니아(전지역)', note: malariaNote('전지역') })),
+  ...['네팔','라오스','말레이시아','방글라데시','베트남','부탄','브루나이','사우디아라비아','아프가니스탄','예멘','이란','인도네시아','캄보디아','태국','티모르레스테','동티모르','파키스탄','파푸아뉴기니','필리핀']
+    .map(name => ({ name, group: '해외 말라리아 · 아시아/오세아니아(일부지역)', note: malariaNote('일부지역') })),
+];
+
+function filterTravel() {
+  const q = document.getElementById('travel-query').value.trim().toLowerCase();
+  const el = document.getElementById('travel-results');
+  if (!q) { el.innerHTML = ''; return; }
+
+  const hits = TRAVEL_ZONES.filter(z =>
+    z.name.toLowerCase().includes(q) || (z.aliases || []).some(a => a.toLowerCase().includes(q))
+  );
+
+  if (!hits.length) {
+    el.innerHTML = `<div class="card"><div class="msg msg-success" style="margin:0">확인된 제한사항이 없습니다. 최종 확인은 현장 문진 시 진행됩니다.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = hits.map(z => `
+    <div class="card info-card" style="margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:8px">${z.name} <span style="font-size:11px;color:var(--text-muted);font-weight:600">· ${z.group}</span></div>
+      <p style="font-size:13px;color:var(--text-body);font-weight:500;line-height:1.6">${z.note}</p>
+    </div>
+  `).join('');
 }
 
 // ── Step Navigation ───────────────────────────────────────────────────

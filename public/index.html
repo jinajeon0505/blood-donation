@@ -21,6 +21,7 @@
   <div class="tabs">
     <button class="tab-btn active" id="tab-btn-reserve" onclick="showTab('reserve')">신청하기</button>
     <button class="tab-btn" id="tab-btn-lookup" onclick="showTab('lookup')">신청 조회 / 수정</button>
+    <button class="tab-btn" id="tab-btn-travel" onclick="showTab('travel')">여행지역 확인</button>
   </div>
 
   <!-- ===== 신청하기 탭 ===== -->
@@ -142,6 +143,28 @@
     <!-- 결과 목록 (JS가 동적으로 렌더링) -->
     <div id="lookup-results"></div>
   </div><!-- /tab-lookup -->
+
+  <!-- ===== 여행지역 확인 탭 ===== -->
+  <div id="tab-travel" style="display:none">
+    <div class="card">
+      <div class="card-title">여행/체류 지역 확인</div>
+      <p style="font-size:13px;color:var(--text-muted);font-weight:500;margin-bottom:16px;line-height:1.6">
+        최근 다녀오신 국가나 국내 지역을 입력하면, 말라리아·vCJD(변종크로이츠펠트야콥병) 위험지역 해당 여부와 헌혈 제한 기준을 확인할 수 있어요.
+      </p>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">국가 / 지역명</label>
+        <input type="text" class="form-input" id="travel-query" placeholder="예: 태국, 파주시, 영국" oninput="filterTravel()">
+      </div>
+    </div>
+    <div id="travel-results"></div>
+    <div class="card info-card">
+      <div class="card-title">안내</div>
+      <ul>
+        <li>이 조회는 참고용이며, 최종 헌혈 가능 여부는 현장 문진 시 간호사가 확인합니다.</li>
+        <li>출처: 대한적십자사 혈액관리본부 헌혈 필수 안내문(2025)</li>
+      </ul>
+    </div>
+  </div><!-- /tab-travel -->
 
 </div><!-- /container -->
 
