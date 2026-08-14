@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 페이지 — 헌혈 나눔 신청</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── stat cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg);
+      padding: 20px 20px 16px;
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+    }
+    .stat-card.c2 { border-top-color: var(--neutral-800); }
+    .stat-card.c3 { border-top-color: var(--neutral-800); }
+    .stat-card.c4 { border-top-color: var(--success); }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-size: 32px; font-weight: 900; color: var(--text-strong); letter-spacing: -0.02em; }
+    .stat-card.c1 .stat-value { color: var(--accent); }
+
+    /* ── filter row ── */
+    .filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+    .filter-row .form-group { margin: 0; flex: 1; min-width: 150px; }
+
+    /* ── table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { border-bottom: 2px solid var(--border-strong); }
+    th {
+      background: var(--surface); color: var(--text-muted);
+      font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+      padding: 11px 14px; text-align: left; white-space: nowrap;
+    }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; font-weight: 500; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--surface); }
+
+    .code-cell {
+      font-family: var(--font-mono);
+      letter-spacing: 2px; font-weight: 800; font-size: 13px;
+      color: var(--text-strong);
+    }
+    .empty-row td { text-align: center; color: var(--text-faint); padding: 48px; font-weight: 600; }
+    .table-wrap { overflow-x: auto; }
+
+    /* ── slot grid ── */
+    .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .slot-card { border: 1px solid var(--border); background: var(--bg); }
+    .slot-card-header {
+      background: var(--hecto-black);
+      padding: 9px 14px;
+      font-size: 12px; font-weight: 800; color: var(--hecto-white);
+    }
+    .slot-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 600;
+    }
+    .slot-row:last-child { border-bottom: none; }
+    .slot-row:hover { background: var(--surface); }
+    .slot-dots { display: flex; gap: 3px; align-items: center; }
+    .s-dot { width: 8px; height: 8px; flex-shrink: 0; }
+    .s-dot.filled { background: var(--accent); }
+    .s-dot.empty  { background: var(--border); }
+    .s-dot.full   { background: var(--danger); }
+    .s-dot.warn   { background: var(--warning); }
+    .slot-count { font-size: 12px; font-weight: 800; margin-left: 6px; }
+
+    .hdr-actions .btn-secondary {
+      background: transparent;
+      border-color: var(--neutral-600);
+      color: var(--hecto-white);
+    }
+    .hdr-actions .btn-secondary:hover { background: var(--neutral-800); }
+
+    @media (max-width: 640px) {
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      th, td { padding: 8px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <img class="header-logo" src="assets/logo-hecto-white.png" alt="Hecto">
+  <div class="header-text">
+    <div class="header-title">관리자 페이지</div>
+    <div class="header-sub">헌혈 나눔 신청 현황 · 30초 자동 갱신</div>
+  </div>
+  <div class="hdr-actions">
+    <select id="csv-date-sel" class="form-input" style="height:32px;padding:0 10px;font-size:12px;font-weight:700;width:auto;background:#fff;border-color:var(--neutral-600)" onchange="updateCsvBtn()">
+      <option value="">전체 날짜</option>
+    </select>
+    <button class="btn btn-secondary btn-sm" id="csv-btn" onclick="exportCSV()">CSV 다운로드</button>
+    <a href="/" class="btn btn-secondary btn-sm">← 신청</a>
+  </div>
+</header>
+
+<div class="container" style="max-width:1100px">
+
+  <!-- 통계 카드 -->
+  <div class="stat-grid">
+    <div class="stat-card c1">
+      <div class="stat-label">총 신청</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card c2">
+      <div class="stat-label">8/31 (월)</div>
+      <div class="stat-value" id="stat-d1">—</div>
+    </div>
+    <div class="stat-card c3">
+      <div class="stat-label">9/1 (화)</div>
+      <div class="stat-value" id="stat-d2">—</div>
+    </div>
+    <div class="stat-card c4">
+      <div class="stat-label">잔여 좌석</div>
+      <div class="stat-value" id="stat-avail">—</div>
+    </div>
+  </div>
+
+  <!-- 슬롯 현황 -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title" style="margin-bottom:12px">슬롯별 신청 현황</div>
+    <div class="slot-grid" id="slot-grid"></div>
+  </div>
+
+  <!-- 신청 목록 -->
+  <div class="card">
+    <div class="card-title">신청 목록</div>
+    <div class="filter-row">
+      <div class="form-group">
+        <label class="form-label">날짜 필터</label>
+        <select class="form-input" id="filter-date" onchange="applyFilter()">
+          <option value="">전체 날짜</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">검색 (회사/부서/이름)</label>
+        <input type="text" class="form-input" id="filter-search" placeholder="검색어 입력" oninput="applyFilter()">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="clearFilters()" style="height:40px;align-self:flex-end">초기화</button>
+    </div>
+    <div id="filtered-count" style="font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:10px"></div>
+    <div class="table-wrap">
+      <table id="res-table">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>시간</th>
+            <th>소속 회사</th>
+            <th>소속 부서(팀)</th>
+            <th>이름</th>
+            <th>신청 일시</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="res-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DATES = [
+  { value: '2026-08-31', label: '8/31 (월)' },
+  { value: '2026-09-01', label: '9/1 (화)' },
+];
+const TIMES = [
+  '08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+  '12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30',
+];
+const MAX = 6;
+
+let allApplications = [];
+let filteredApplications = [];
+let slots = {};
+
+async function load() {
+  const [rRes, sRes] = await Promise.all([
+    fetch('/api/admin/applications'),
+    fetch('/api/slots'),
+  ]);
+  allApplications = await rRes.json();
+  slots = await sRes.json();
+  filteredApplications = allApplications;
+  renderStats();
+  renderSlotGrid();
+  renderTable(allApplications);
+  initDateFilter();
+}
+
+function renderStats() {
+  const total = allApplications.length;
+  const d1 = allApplications.filter(r => r.date === DATES[0].value).length;
+  const d2 = allApplications.filter(r => r.date === DATES[1].value).length;
+  const totalSlots = TIMES.length * DATES.length * MAX;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-d1').textContent  = d1;
+  document.getElementById('stat-d2').textContent  = d2;
+  document.getElementById('stat-avail').textContent = totalSlots - total;
+}
+
+function renderSlotGrid() {
+  const grid = document.getElementById('slot-grid');
+  grid.innerHTML = '';
+
+  DATES.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'slot-card';
+    card.innerHTML = `<div class="slot-card-header">${d.label}</div>`;
+    TIMES.forEach(t => {
+      const count = slots[d.value]?.[t]?.count ?? 0;
+      const isFull = count >= MAX;
+      const isWarn = count >= MAX - 1;
+      const dotCls = isFull ? 'full' : isWarn ? 'warn' : 'filled';
+      const countColor = isFull ? 'var(--danger)' : isWarn ? 'var(--warning)' : 'var(--accent)';
+      const dots = Array.from({ length: MAX }, (_, i) =>
+        `<div class="s-dot ${i < count ? dotCls : 'empty'}"></div>`
+      ).join('');
+      const row = document.createElement('div');
+      row.className = 'slot-row';
+      row.innerHTML = `
+        <span>${t}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="slot-dots">${dots}</div>
+          <span class="slot-count" style="color:${countColor}">${count}/${MAX}</span>
+        </div>`;
+      card.appendChild(row);
+    });
+    grid.appendChild(card);
+  });
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('res-tbody');
+  document.getElementById('filtered-count').textContent = `총 ${rows.length}건`;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">신청 내역이 없습니다.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const d = DATES.find(d => d.value === r.date);
+    const created = r.created_at ? r.created_at.replace('T', ' ').substring(0, 16) : '';
+    return `<tr>
+      <td>${d?.label ?? r.date}</td>
+      <td><strong>${r.time}</strong></td>
+      <td>${esc(r.company)}</td>
+      <td>${esc(r.team)}</td>
+      <td><strong>${esc(r.name)}</strong></td>
+      <td style="color:var(--text-faint);font-size:12px">${created}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteApplication('${r.code}')">삭제</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function applyFilter() {
+  const date   = document.getElementById('filter-date').value;
+  const search = document.getElementById('filter-search').value.toLowerCase();
+
+  filteredApplications = allApplications.filter(r =>
+    (!date   || r.date === date) &&
+    (!search || [r.company, r.team, r.name].some(v => v.toLowerCase().includes(search)))
+  );
+  renderTable(filteredApplications);
+  updateCsvBtn();
+}
+
+function clearFilters() {
+  document.getElementById('filter-date').value   = '';
+  document.getElementById('filter-search').value = '';
+  filteredApplications = allApplications;
+  renderTable(allApplications);
+  updateCsvBtn();
+}
+
+function initDateFilter() {
+  ['filter-date', 'csv-date-sel'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel || sel.options.length > 1) return;
+    DATES.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.value; o.textContent = d.label;
+      sel.appendChild(o);
+    });
+  });
+}
+
+async function deleteApplication(code) {
+  if (!confirm(`신청 코드 ${code} 를 삭제하시겠습니까?`)) return;
+  const res = await fetch(`/api/applications/${code}`, { method: 'DELETE' });
+  if (res.ok) { await load(); }
+  else { const d = await res.json(); alert(d.error || '삭제 실패'); }
+}
+
+function updateCsvBtn() {
+  const date = document.getElementById('csv-date-sel').value;
+  const d = DATES.find(d => d.value === date);
+  const btn = document.getElementById('csv-btn');
+  btn.textContent = d ? `${d.label} 다운로드` : 'CSV 다운로드';
+}
+
+function exportCSV() {
+  const date = document.getElementById('csv-date-sel').value;
+  const d = DATES.find(d => d.value === date);
+  const exportData = date ? allApplications.filter(r => r.date === date) : allApplications;
+  const rows = [['날짜','시간','소속회사','소속부서(팀)','이름','신청일시']];
+  exportData.forEach(r => {
+    const rd = DATES.find(d => d.value === r.date);
+    rows.push([rd?.label ?? r.date, r.time, r.company, r.team, r.name, r.created_at ?? '']);
+  });
+  const bom = '﻿';
+  const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const suffix = d ? `_${d.label.replace('/','월').replace(' (','').replace(')','일')}` : '';
+  a.download = `헌혈신청${suffix}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+load();
+setInterval(load, 30000); // 30초마다 자동 갱신
+</script>
+</body>
+</html>
