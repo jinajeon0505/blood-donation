@@ -165,7 +165,7 @@ body {
 .reward-item .rv { color: var(--accent); font-weight: 800; white-space: nowrap; text-decoration: none; }
 .reward-item .rv:hover { color: var(--accent-hover); }
 
-.cta-banner {
+.card.cta-banner {
   background: var(--hecto-black);
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
   flex-wrap: wrap;
