@@ -241,6 +241,13 @@ body {
 .cta-title strong { color: var(--accent); }
 .cta-sub   { font-size: 12px; color: var(--neutral-400); font-weight: 500; line-height: 1.6; }
 
+.card.cta-banner.cta-banner-light {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.cta-banner-light .cta-title { color: var(--text-strong); }
+.cta-banner-light .cta-sub   { color: var(--text-muted); }
+
 /* ═══════════════════════════ ELIGIBILITY CHECK ═══════════════════════════ */
 .tip-box {
   margin-top: 16px;
