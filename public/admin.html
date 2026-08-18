@@ -133,7 +133,7 @@
       <div class="stat-value" id="stat-avail">—</div>
     </div>
     <div class="stat-card c2">
-      <div class="stat-label">개별헌혈</div>
+      <div class="stat-label">개별 헌혈</div>
       <div class="stat-value" id="stat-individual">—</div>
     </div>
   </div>
@@ -336,7 +336,7 @@ function exportCSV() {
     const isIndividual = r.type === 'individual';
     const rd = DATES.find(d => d.value === r.date);
     rows.push([
-      isIndividual ? '개별헌혈' : '단체헌혈',
+      isIndividual ? '개별 헌혈' : '단체헌혈',
       isIndividual ? '-' : (rd?.label ?? r.date),
       isIndividual ? '-' : r.time,
       r.company, r.team, r.name, r.created_at ?? '',

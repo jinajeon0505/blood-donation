@@ -281,7 +281,7 @@ function updateStepIndicator() {
 function renderSummary(step) {
   const chips = [];
   if (S.appType === 'individual') {
-    chips.push('개별헌혈 후 헌혈증 기부');
+    chips.push('개별 헌혈 후 헌혈증 기부');
   } else {
     if (S.date) {
       const d = DATES.find(d => d.value === S.date);
@@ -395,7 +395,7 @@ async function submitApplication() {
 function showConfirm(code, info) {
   const rows = S.appType === 'individual'
     ? [
-        ['신청 유형', '개별헌혈 후 헌혈증 기부'],
+        ['신청 유형', '개별 헌혈 후 헌혈증 기부'],
         ['소속 회사', info.company],
         ['소속 부서(팀)', info.team],
         ['이름', info.name],
@@ -482,7 +482,7 @@ function renderLookupResults(list) {
 
     const infoRows = isIndividual
       ? [
-          ['신청 유형', '개별헌혈 후 헌혈증 기부'],
+          ['신청 유형', '개별 헌혈 후 헌혈증 기부'],
           ['소속 회사', r.company],
           ['소속 부서(팀)', r.team],
           ['이름', r.name],
