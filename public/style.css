@@ -109,8 +109,8 @@ body {
 /* ── stats hero ── */
 .stats-hero { padding: 0; overflow: hidden; }
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; }
-.stats-left  { padding: 28px; border-right: 1px solid var(--border); }
-.stats-right { padding: 28px; background: var(--surface); }
+.stats-left  { padding: 28px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.stats-right { padding: 28px; background: var(--surface); display: flex; flex-direction: column; }
 
 .stats-left-label { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
 .stats-big-number { display: flex; align-items: baseline; gap: 4px; }
@@ -179,14 +179,14 @@ body {
   font-size: 9px; font-weight: 800; color: var(--accent); line-height: 1.4;
 }
 
-.bar-chart-block { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 51px; }
-.bar-chart-head { margin-bottom: 14px; }
+.bar-chart-block { border-top: 1px solid var(--border); padding-top: 18px; flex: 1; display: flex; flex-direction: column; }
+.bar-chart-head { margin-bottom: 14px; flex-shrink: 0; }
 .bar-chart-head span { font-size: 12px; font-weight: 800; color: var(--text-strong); }
 
-.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 176px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; flex: 1; }
 .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
 .bar-val { font-size: 9px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; white-space: nowrap; }
-.bar { width: 66%; margin: 0 auto; background: var(--accent); }
+.bar { width: 66%; margin: 0 auto; background: var(--accent); flex-shrink: 0; }
 .bar-x { font-size: 9px; color: var(--text-faint); font-weight: 600; margin-top: 6px; }
 
 .impact-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
@@ -741,6 +741,7 @@ a.footer-info-value:hover { color: var(--accent-hover); }
   .stats-left { border-right: none; border-bottom: 1px solid var(--border); }
   .stats-big-number .num { font-size: 40px; }
   .timeline-nums span { font-size: 8px; }
-  .bar-chart { height: 90px; }
+  .bar-chart-block { flex: none; }
+  .bar-chart { flex: none; height: 150px; }
   .bar-val, .bar-x { font-size: 8px; }
 }
