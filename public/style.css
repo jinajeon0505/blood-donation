@@ -183,7 +183,7 @@ body {
 .bar-chart-head { margin-bottom: 14px; flex-shrink: 0; }
 .bar-chart-head span { font-size: 12px; font-weight: 800; color: var(--text-strong); }
 
-.bar-chart { display: flex; align-items: flex-end; gap: 6px; flex: 1; }
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; flex: 1; min-height: 150px; }
 .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
 .bar-val { font-size: 9px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; white-space: nowrap; }
 .bar { width: 66%; margin: 0 auto; background: var(--accent); flex-shrink: 0; }
