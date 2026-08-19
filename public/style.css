@@ -123,31 +123,23 @@ body {
   border-top: 1px solid var(--border); padding-top: 14px; margin-bottom: 16px;
 }
 .stats-highlight {
-  position: relative;
   font-size: 13px; font-weight: 700; color: var(--text-body); line-height: 1.6;
-  background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 20px 16px 16px;
+  background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 16px;
 }
 .stats-highlight strong { color: var(--accent); }
-
-.stats-highlight-badge {
-  position: absolute; top: -8px; left: 14px;
-  background: var(--hecto-black); color: var(--hecto-white);
-  font-size: 9px; font-weight: 900; letter-spacing: 0.06em;
-  padding: 2px 8px;
-}
 .stats-highlight-text { margin-bottom: 14px; }
 
-.stats-eq { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.stats-eq { display: flex; align-items: stretch; gap: 8px; margin-bottom: 12px; }
 .stats-eq-item {
   flex: 1; display: flex; align-items: center; gap: 8px;
   background: var(--bg); border: 1px solid var(--border);
-  padding: 10px 10px; font-size: 12px; font-weight: 700; color: var(--text-body);
+  padding: 8px 10px; font-size: 12px; font-weight: 700; color: var(--text-body);
 }
 .stats-eq-icon { width: 24px; height: 24px; flex-shrink: 0; }
 .stats-eq-icon svg { width: 100%; height: 100%; }
-.stats-eq-sign { font-size: 16px; font-weight: 900; color: var(--text-faint); flex-shrink: 0; }
+.stats-eq-sign { font-size: 16px; font-weight: 900; color: var(--text-faint); flex-shrink: 0; align-self: center; }
 .stats-eq-result {
-  flex: 1; text-align: center;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
   background: var(--accent); color: var(--on-accent);
   font-size: 12px; font-weight: 800; line-height: 1.4;
   padding: 8px 6px;
@@ -187,7 +179,7 @@ body {
   font-size: 9px; font-weight: 800; color: var(--accent); line-height: 1.4;
 }
 
-.bar-chart-block { border-top: 1px solid var(--border); padding-top: 18px; }
+.bar-chart-block { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 51px; }
 .bar-chart-head { margin-bottom: 14px; }
 .bar-chart-head span { font-size: 12px; font-weight: 800; color: var(--text-strong); }
 
