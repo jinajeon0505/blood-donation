@@ -421,17 +421,6 @@ function showConfirm(info) {
   goStep(5);
 }
 
-function resetApplication() {
-  S.step = 1; S.date = null; S.time = null; S.appType = null;
-  document.getElementById('inp-company').value = '';
-  ['inp-team', 'inp-name'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('form-err').style.display = 'none';
-  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
-  for (let i = 2; i <= 5; i++) document.getElementById(`step-${i}`).style.display = 'none';
-  document.getElementById('step-1').style.display = '';
-  updateStepIndicator();
-}
-
 // ── Lookup ────────────────────────────────────────────────────────────
 async function lookupApplication() {
   const team  = document.getElementById('lookup-team').value.trim();
