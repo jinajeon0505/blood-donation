@@ -42,7 +42,12 @@ const MAX_PER_SLOT = 6;
 
 const EXTRA_COUNTS = [];
 const BLOCKED_DATES = [];
-const BLOCKED_SLOTS = [];
+const BLOCKED_SLOTS = [
+  { date: '2026-08-31', time: '12:00' },
+  { date: '2026-08-31', time: '12:30' },
+  { date: '2026-09-01', time: '12:00' },
+  { date: '2026-09-01', time: '12:30' },
+];
 
 function validate(date, time) {
   if (!VALID_DATES.includes(date)) return '유효하지 않은 날짜입니다.';
