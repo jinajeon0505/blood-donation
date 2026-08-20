@@ -9,7 +9,12 @@ const TIMES = [
 const MAX = 6;
 const EXTRA_COUNTS = [];
 const BLOCKED_DATES = [];
-const BLOCKED_SLOTS = [];
+const BLOCKED_SLOTS = [
+  { date: '2026-08-31', time: '12:00', reason: '점심시간' },
+  { date: '2026-08-31', time: '12:30', reason: '점심시간' },
+  { date: '2026-09-01', time: '12:00', reason: '점심시간' },
+  { date: '2026-09-01', time: '12:30', reason: '점심시간' },
+];
 const COMPANIES = [
   '헥토', '헥토이노베이션', '헥토파이낸셜', '헥토헬스케어', '헥토데이터',
   '헥토미디어', '헥토큐앤엠', '헥토월렛원', '드림베이',
@@ -300,6 +305,7 @@ function renderDateGrid() {
   DATES.forEach(d => {
     const isBlocked = BLOCKED_DATES.some(b => b.date === d.value);
     const totalAvail = TIMES.reduce((sum, t) => {
+      if (BLOCKED_SLOTS.some(b => b.date === d.value && b.time === t)) return sum;
       const base  = S.slots?.[d.value]?.[t]?.count ?? 0;
       const extra = EXTRA_COUNTS.find(e => e.date === d.value && e.time === t)?.extra ?? 0;
       return sum + Math.max(0, MAX - base - extra);
@@ -326,7 +332,8 @@ function renderTimeGrid() {
   TIMES.forEach(time => {
     const isBlockedDate = BLOCKED_DATES.some(b => b.date === S.date);
     const blockedDateReason = BLOCKED_DATES.find(b => b.date === S.date)?.reason;
-    const isBlocked = isBlockedDate || BLOCKED_SLOTS.some(b => b.date === S.date && b.time === time);
+    const blockedSlotReason = BLOCKED_SLOTS.find(b => b.date === S.date && b.time === time)?.reason;
+    const isBlocked = isBlockedDate || !!blockedSlotReason;
     const base  = S.slots?.[S.date]?.[time]?.count ?? 0;
     const extra = EXTRA_COUNTS.find(e => e.date === S.date && e.time === time)?.extra ?? 0;
     const count = base + extra;
@@ -334,7 +341,7 @@ function renderTimeGrid() {
     const isFull = isBlocked || avail <= 0;
     const isWarn = !isBlocked && avail <= 2;
     const cls   = isFull ? 'avail-full' : isWarn ? 'avail-warn' : 'avail-ok';
-    const label = isBlockedDate ? blockedDateReason : isBlocked ? '운영없음' : isFull ? '마감' : `잔여 ${avail}석`;
+    const label = isBlockedDate ? blockedDateReason : isBlocked ? (blockedSlotReason || '운영없음') : isFull ? '마감' : `잔여 ${avail}석`;
 
     const dots = Array.from({ length: MAX }, (_, i) =>
       `<div class="seat-dot ${i < count ? 'filled' : 'empty'}"></div>`
@@ -610,6 +617,7 @@ function updateEditDateSelect(code, selectedDate) {
   const sel = document.getElementById(`ed-${code}`);
   sel.innerHTML = DATES.map(d => {
     const totalAvail = TIMES.reduce((sum, t) => {
+      if (BLOCKED_SLOTS.some(b => b.date === d.value && b.time === t)) return sum;
       const count = S.slots?.[d.value]?.[t]?.count ?? 0;
       return sum + Math.max(0, MAX - count);
     }, 0);
@@ -621,12 +629,15 @@ function updateEditDateSelect(code, selectedDate) {
 function updateEditTimeSelect(code, date, origDate, origTime) {
   const sel = document.getElementById(`et-${code}`);
   sel.innerHTML = TIMES.map(t => {
+    const isCurrent = date === origDate && t === origTime;
+    const blockedReason = BLOCKED_SLOTS.find(b => b.date === date && b.time === t)?.reason;
+    const isBlocked = !!blockedReason;
     const count = S.slots?.[date]?.[t]?.count ?? 0;
     const avail = MAX - count;
-    const full  = avail <= 0;
-    const isCurrent = date === origDate && t === origTime;
+    const full  = isBlocked || avail <= 0;
     let label;
     if (isCurrent)       label = `${t}  ·  현재 신청`;
+    else if (isBlocked)  label = `${t}  ·  ${blockedReason || '운영없음'}`;
     else if (full)       label = `${t}  ·  마감`;
     else                 label = `${t}  ·  잔여 ${avail}석`;
     return `<option value="${t}"${t === origTime ? ' selected' : ''}${full && !isCurrent ? ' disabled' : ''}>${label}</option>`;
