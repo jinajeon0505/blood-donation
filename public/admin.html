@@ -171,6 +171,7 @@
             <th>소속 회사</th>
             <th>소속 부서(팀)</th>
             <th>이름</th>
+            <th>신청 코드</th>
             <th>신청 일시</th>
             <th></th>
           </tr>
@@ -260,7 +261,7 @@ function renderTable(rows) {
   document.getElementById('filtered-count').textContent = `총 ${rows.length}건`;
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">신청 내역이 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">신청 내역이 없습니다.</td></tr>`;
     return;
   }
 
@@ -275,6 +276,7 @@ function renderTable(rows) {
       <td>${esc(r.company)}</td>
       <td>${esc(r.team)}</td>
       <td><strong>${esc(r.name)}</strong></td>
+      <td class="code-cell">${r.code}</td>
       <td style="color:var(--text-faint);font-size:12px">${created}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteApplication('${r.code}')">삭제</button></td>
     </tr>`;
