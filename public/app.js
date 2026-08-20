@@ -392,14 +392,14 @@ async function submitApplication() {
     }
 
     await fetchSlots();
-    showConfirm(data.code, { company, team, name });
+    showConfirm({ company, team, name });
   } catch {
     errEl.textContent = '서버 오류가 발생했습니다. 다시 시도해 주세요.';
     errEl.style.display = '';
   }
 }
 
-function showConfirm(code, info) {
+function showConfirm(info) {
   const rows = S.appType === 'individual'
     ? [
         ['신청 유형', '개별 헌혈 후 헌혈증 기부'],
@@ -417,11 +417,7 @@ function showConfirm(code, info) {
           ['이름', info.name],
         ];
       })();
-  document.getElementById('done-detail').innerHTML = `
-    <div style="text-align:center;padding:16px 0 4px">
-      <div class="dl" style="display:block;margin-bottom:4px">신청 코드</div>
-      <div class="code-display">${code}</div>
-    </div>` + detailRows(rows);
+  document.getElementById('done-detail').innerHTML = detailRows(rows);
   goStep(5);
 }
 
