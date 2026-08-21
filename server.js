@@ -9,6 +9,27 @@ const pool = new Pool({
 });
 
 app.use(express.json());
+
+// ── 관리자 인증 ───────────────────────────────────────────────────────
+function requireAdminAuth(req, res, next) {
+  const expected = process.env.ADMIN_PASSWORD;
+  if (!expected) {
+    return res.status(500).send('서버에 ADMIN_PASSWORD가 설정되지 않았습니다.');
+  }
+  const auth = req.headers.authorization || '';
+  const [scheme, encoded] = auth.split(' ');
+  if (scheme === 'Basic' && encoded) {
+    const [, password] = Buffer.from(encoded, 'base64').toString().split(':');
+    if (password === expected) return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="Admin"');
+  res.status(401).send('인증이 필요합니다.');
+}
+
+app.get('/admin.html', requireAdminAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── DB Init ───────────────────────────────────────────────────────────
@@ -233,7 +254,7 @@ app.delete('/api/applications/:code', async (req, res) => {
 });
 
 // ── API: 관리자 전체 조회 ─────────────────────────────────────────────
-app.get('/api/admin/applications', async (req, res) => {
+app.get('/api/admin/applications', requireAdminAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT * FROM applications ORDER BY date, time'
