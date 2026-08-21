@@ -30,6 +30,16 @@ async function initDB() {
   await pool.query(`ALTER TABLE applications ADD COLUMN IF NOT EXISTS type VARCHAR(10) NOT NULL DEFAULT 'group'`);
   await pool.query(`ALTER TABLE applications ALTER COLUMN date DROP NOT NULL`);
   await pool.query(`ALTER TABLE applications ALTER COLUMN time DROP NOT NULL`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS donation_history (
+      id      SERIAL PRIMARY KEY,
+      round   INTEGER NOT NULL,
+      company TEXT NOT NULL,
+      team    TEXT,
+      name    TEXT NOT NULL
+    )
+  `);
 }
 
 // ── 상수 ──────────────────────────────────────────────────────────────
