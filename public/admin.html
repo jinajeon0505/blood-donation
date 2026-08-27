@@ -193,6 +193,12 @@ const TIMES = [
   '12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30',
 ];
 const MAX = 6;
+const BLOCKED_SLOTS = [
+  { date: '2026-08-31', time: '12:00' },
+  { date: '2026-08-31', time: '12:30' },
+  { date: '2026-09-01', time: '12:00' },
+  { date: '2026-09-01', time: '12:30' },
+];
 
 let allApplications = [];
 let filteredApplications = [];
@@ -217,7 +223,7 @@ function renderStats() {
   const d1 = allApplications.filter(r => r.date === DATES[0].value).length;
   const d2 = allApplications.filter(r => r.date === DATES[1].value).length;
   const individual = allApplications.filter(r => r.type === 'individual').length;
-  const totalSlots = TIMES.length * DATES.length * MAX;
+  const totalSlots = (TIMES.length * DATES.length - BLOCKED_SLOTS.length) * MAX;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-d1').textContent  = d1;
   document.getElementById('stat-d2').textContent  = d2;
