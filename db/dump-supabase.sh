@@ -171,7 +171,31 @@ then
   echo "연결 실패 (대상=$EFFECTIVE_HOST)." >&2
   echo "  * \"Is the server running locally\" 가 보이면 호스트가 소켓 경로로 해석된 것이다." >&2
   echo "    PGHOST 앞의 '@' 나 URL 의 '@' 중복을 확인하세요." >&2
-  echo "  * 인증 실패면 비밀번호를, 타임아웃이면 IPv4 접근 가능 여부를 확인하세요." >&2
+  echo "  * \"password authentication failed\" 는 비밀번호 문제다." >&2
+  echo "    Supabase 풀러는 postgres.<ref> 에서 접미사를 떼어내므로," >&2
+  echo "    오류에 user \"postgres\" 로 표시되는 것은 정상이다. PGUSER 문제가 아니다." >&2
+  echo "  * 타임아웃이면 IPv4 접근 가능 여부를 확인하세요." >&2
+
+  # 비밀번호 진단. 값은 절대 출력하지 않고 형태만 알려준다.
+  if [ "$MODE" = fields ] && [ -n "${PGPASSWORD:-}" ]; then
+    echo >&2
+    echo "  입력한 비밀번호 형태 (값은 표시하지 않음):" >&2
+    echo "    길이       : ${#PGPASSWORD}자" >&2
+    case "$PGPASSWORD" in
+      " "*|*" ") echo "    ⚠ 앞이나 뒤에 공백이 있습니다. 복사할 때 딸려온 것일 수 있습니다." >&2 ;;
+    esac
+    case "$PGPASSWORD" in
+      *%[0-9A-Fa-f][0-9A-Fa-f]*)
+        echo "    ⚠ 퍼센트 인코딩(%XX)처럼 보입니다." >&2
+        echo "      URL 에서 복사했다면 디코딩한 원본을 입력해야 합니다 (%40 → @)." >&2
+        ;;
+    esac
+    case "$PGPASSWORD" in
+      *"["*|*"]"*)
+        echo "    ⚠ 대괄호가 있습니다. [YOUR-PASSWORD] 같은 자리표시자를 그대로 넣지 않았는지 확인하세요." >&2
+        ;;
+    esac
+  fi
   exit 1
 fi
 
