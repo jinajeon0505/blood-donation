@@ -1,32 +1,73 @@
 #!/usr/bin/env bash
 # Supabase PostgreSQL 을 로컬 파일로 덤프한다.
 #
-# 사용법:
-#   export SUPABASE_DATABASE_URL='postgresql://postgres.xxx:PASSWORD@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres'
+# 사용법 — 둘 중 편한 쪽을 쓴다.
+#
+# (A) 개별 필드 (권장). 비밀번호 퍼센트 인코딩이 필요 없다.
+#   export PGHOST=aws-0-ap-southeast-1.pooler.supabase.com
+#   export PGPORT=5432
+#   export PGUSER=postgres.xxxxxxxxxxxx
+#   export PGDATABASE=postgres
+#   ./db/dump-supabase.sh          # 비밀번호는 입력 프롬프트로 받는다
+#
+# (B) 커넥션 스트링
+#   export SUPABASE_DATABASE_URL='postgresql://user:PASSWORD@host:5432/postgres'
 #   ./db/dump-supabase.sh
 #
-# 중요 — 반드시 포트 5432 연결 문자열을 쓸 것:
-#   Supabase 대시보드 > Project Settings > Database > Connection string
+# 중요 — 반드시 포트 5432 로 접속할 것:
+#   Supabase 대시보드 > Connect (또는 Settings > Database > Connection string)
 #     * "Session pooler"     (...pooler.supabase.com:5432) — IPv4 가능, 권장
 #     * "Direct connection"  (db.<ref>.supabase.co:5432)   — IPv6 전용일 수 있음
 #     * "Transaction pooler" (...:6543) — pg_dump 가 동작하지 않는다. 쓰지 말 것.
-#   비밀번호에 @ : / ? # 등이 있으면 퍼센트 인코딩해야 한다.
 #
 # 산출물은 backup/<타임스탬프>/ 아래에 생성되고 .gitignore 로 제외된다.
 # 신청자 실명·소속이 들어 있으므로 커밋하거나 공유 채널에 올리지 않는다.
 
 set -euo pipefail
 
-if [ -z "${SUPABASE_DATABASE_URL:-}" ]; then
-  echo "오류: SUPABASE_DATABASE_URL 환경변수가 없습니다." >&2
-  echo "  export SUPABASE_DATABASE_URL='postgresql://...:5432/postgres'" >&2
-  exit 1
+# ── 접속 정보 확정 ────────────────────────────────────────────────────
+# URL 이 있으면 URL 모드, 없으면 개별 PG* 필드 모드로 동작한다.
+if [ -n "${SUPABASE_DATABASE_URL:-}" ]; then
+  MODE=url
+  export PGURL="$SUPABASE_DATABASE_URL"
+  PORT_CHECK="$SUPABASE_DATABASE_URL"
+  DOCKER_ENV=(--env PGURL)
+else
+  MODE=fields
+  : "${PGPORT:=5432}"
+  : "${PGDATABASE:=postgres}"
+  MISSING=""
+  [ -z "${PGHOST:-}" ] && MISSING="$MISSING PGHOST"
+  [ -z "${PGUSER:-}" ] && MISSING="$MISSING PGUSER"
+  if [ -n "$MISSING" ]; then
+    echo "오류: 접속 정보가 없습니다. 빠진 값:$MISSING" >&2
+    echo >&2
+    echo "  export PGHOST=aws-0-<리전>.pooler.supabase.com" >&2
+    echo "  export PGPORT=5432" >&2
+    echo "  export PGUSER=postgres.<프로젝트ref>" >&2
+    echo "  export PGDATABASE=postgres" >&2
+    echo >&2
+    echo "또는 SUPABASE_DATABASE_URL 에 커넥션 스트링 전체를 넣으세요." >&2
+    exit 1
+  fi
+  # 비밀번호는 프롬프트로 받는다. 셸 히스토리에 남지 않는다.
+  if [ -z "${PGPASSWORD:-}" ]; then
+    printf 'DB 비밀번호 (%s@%s): ' "$PGUSER" "$PGHOST" >&2
+    stty -echo 2>/dev/null || true
+    read -r PGPASSWORD
+    stty echo 2>/dev/null || true
+    printf '\n' >&2
+    [ -n "$PGPASSWORD" ] || { echo "오류: 비밀번호가 비어 있습니다." >&2; exit 1; }
+  fi
+  export PGHOST PGPORT PGUSER PGDATABASE PGPASSWORD
+  PORT_CHECK=":$PGPORT/"
+  DOCKER_ENV=(--env PGHOST --env PGPORT --env PGUSER --env PGDATABASE --env PGPASSWORD --env PGSSLMODE)
 fi
 
-case "$SUPABASE_DATABASE_URL" in
-  *:6543/*)
-    echo "오류: 6543(Transaction pooler) 연결로는 pg_dump 가 동작하지 않습니다." >&2
-    echo "      5432(Session pooler 또는 Direct connection) 문자열을 쓰세요." >&2
+case "$PORT_CHECK" in
+  *:6543*)
+    echo "오류: 6543(Transaction pooler) 으로는 pg_dump 가 동작하지 않습니다." >&2
+    echo "      5432(Session pooler 또는 Direct connection) 로 접속하세요." >&2
     exit 1
     ;;
 esac
@@ -39,20 +80,20 @@ STAMP="$(date +'%Y%m%d-%H%M%S')"
 OUTDIR="$REPO_ROOT/backup/$STAMP"
 mkdir -p "$OUTDIR"
 
-# 연결 문자열을 docker 명령줄(=프로세스 목록)에 노출시키지 않으려고
-# 값 대입 없는 --env 환경 상속을 쓴다.
-export PGURL="$SUPABASE_DATABASE_URL"
-
-# SQL 은 stdin 으로 넘긴다. 중첩 인용을 없애기 위해서다.
+# 접속 정보는 --env 환경 상속으로 넘긴다. docker 명령줄(=프로세스 목록)에
+# 값이 노출되지 않는다. SQL 은 stdin 으로 넘겨 중첩 인용을 피한다.
+# URL 모드면 psql/pg_dump 에 URL 을 넘기고, 필드 모드면 libpq 가 PG* 를 읽는다.
 psql_in() {
-  docker run --rm -i --env PGURL --user "$(id -u):$(id -g)" \
+  docker run --rm -i "${DOCKER_ENV[@]}" --user "$(id -u):$(id -g)" \
     -v "$OUTDIR:/out" "$PG_IMAGE" \
-    sh -c 'exec psql "$PGURL" -v ON_ERROR_STOP=1 "$@" -f -' sh "$@"
+    sh -c 'if [ -n "${PGURL:-}" ]; then exec psql "$PGURL" -v ON_ERROR_STOP=1 "$@" -f -; \
+           else exec psql -v ON_ERROR_STOP=1 "$@" -f -; fi' sh "$@"
 }
 pg_dump_run() {
-  docker run --rm --env PGURL --user "$(id -u):$(id -g)" \
+  docker run --rm "${DOCKER_ENV[@]}" --user "$(id -u):$(id -g)" \
     -v "$OUTDIR:/out" "$PG_IMAGE" \
-    sh -c 'exec pg_dump "$PGURL" "$@"' sh "$@"
+    sh -c 'if [ -n "${PGURL:-}" ]; then exec pg_dump "$PGURL" "$@"; \
+           else exec pg_dump "$@"; fi' sh "$@"
 }
 
 echo "==> 연결 확인"
@@ -61,7 +102,7 @@ select current_database();
 select version();
 SQL
 then
-  echo "연결 실패. 연결 문자열, 비밀번호 퍼센트 인코딩, IPv4 접근 가능 여부를 확인하세요." >&2
+  echo "연결 실패. 호스트/유저/비밀번호와 IPv4 접근 가능 여부를 확인하세요." >&2
   exit 1
 fi
 
@@ -92,6 +133,7 @@ echo "==> 5/5 MANIFEST 작성"
   echo "blood-donation Supabase 백업"
   echo "생성 시각 : $STAMP"
   echo "pg_dump   : $PG_IMAGE"
+  echo "접속 모드 : $MODE"
   echo
   echo "행 수:"
   psql_in -At <<'SQL' | sed 's/^/  /'

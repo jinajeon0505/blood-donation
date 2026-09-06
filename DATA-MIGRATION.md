@@ -43,14 +43,34 @@ Transaction pooler(6543)는 prepared statement 를 지원하지 않아 `pg_dump`
 
 ## 2. 덤프 실행
 
+두 가지 방법이 있다. **개별 필드 방식(A)을 권장한다** — 비밀번호에 특수문자가
+있어도 퍼센트 인코딩을 신경 쓸 필요가 없고, 비밀번호가 셸 히스토리에 남지 않는다.
+
+### (A) 개별 필드 — 권장
+
 ```sh
 cd ~/source/blood-donation
 
-# 셸 히스토리에 남기지 않으려면 앞에 공백 한 칸을 두고 입력한다.
- export SUPABASE_DATABASE_URL='postgresql://postgres.xxxx:PASSWORD@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres'
+export PGHOST=aws-0-ap-southeast-1.pooler.supabase.com
+export PGPORT=5432
+export PGUSER=postgres.<프로젝트ref>
+export PGDATABASE=postgres
+
+./db/dump-supabase.sh
+# DB 비밀번호 (postgres.xxx@aws-0-...): ← 여기서 입력. 화면에 표시되지 않는다
+```
+
+### (B) 커넥션 스트링
+
+```sh
+# 앞에 공백 한 칸을 두면 zsh 히스토리에 남지 않는다
+ export SUPABASE_DATABASE_URL='postgresql://postgres.xxxx:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres'
 
 ./db/dump-supabase.sh
 ```
+
+비밀번호에 `@ : / ? #` 가 들어 있으면 URL 에서 퍼센트 인코딩해야 한다
+(`@` → `%40`, `#` → `%23`). 이게 번거로우면 (A) 를 쓴다.
 
 `backup/<타임스탬프>/` 에 다음이 생성된다:
 
