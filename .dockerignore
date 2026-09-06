@@ -1,0 +1,30 @@
+.git
+.github
+.gitignore
+.idea
+.claude
+.vercel
+node_modules
+**/node_modules
+
+# 환경 파일과 비밀값
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.pem
+*.key
+
+# DB 덤프/백업 산출물
+backup
+*.dump
+*.sql.gz
+
+# 문서/로컬 산출물
+DEPLOY.md
+DATA-MIGRATION.md
+scripts
+logs
+**/logs
+coverage
+*.log

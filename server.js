@@ -1,14 +1,72 @@
 const express = require('express');
 const path    = require('path');
+const fs      = require('fs');
 const { Pool } = require('pg');
 
-const app  = express();
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+const app = express();
+
+// ── DB 접속 설정 ──────────────────────────────────────────────────────
+// 개별 DB_* 필드를 우선 사용하고(비밀번호 퍼센트 인코딩 실수를 피함),
+// 없으면 DATABASE_URL로 폴백한다.
+function buildSslConfig() {
+  const mode = (process.env.DB_SSLMODE || 'require').toLowerCase();
+  if (mode === 'disable') return false;
+
+  const caPath = process.env.DB_SSL_CA_PATH;
+  if (mode === 'verify-full') {
+    if (!caPath) {
+      throw new Error('DB_SSLMODE=verify-full 에는 DB_SSL_CA_PATH(CA 번들 경로)가 필요합니다.');
+    }
+    return { ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: true };
+  }
+  // require: 전송은 암호화하지만 서버 인증서는 검증하지 않는다.
+  return caPath
+    ? { ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false }
+    : { rejectUnauthorized: false };
+}
+
+function buildPoolConfig() {
+  const ssl = buildSslConfig();
+  // 타임아웃이 없으면 DB 가 닿지 않을 때 OS TCP 타임아웃(수 분)까지 매달린다.
+  // 그러면 /api/health 가 응답하지 않아 배포 헬스 체크가 실패 대신 멈춘다.
+  const limits = {
+    max: 10,
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 30000,
+    query_timeout: 10000,
+  };
+  if (process.env.DB_HOST) {
+    return {
+      host:     process.env.DB_HOST,
+      port:     parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME,
+      user:     process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      ssl,
+      ...limits,
+    };
+  }
+  return { connectionString: process.env.DATABASE_URL, ssl, ...limits };
+}
+
+const pool = new Pool(buildPoolConfig());
+
+// 유휴 커넥션이 끊길 때 발생하는 오류는 Pool 이 새 커넥션으로 복구한다.
+// 핸들러가 없으면 이 이벤트가 프로세스를 종료시킨다.
+pool.on('error', e => console.error('DB pool error:', e.message));
 
 app.use(express.json());
+
+// ── 헬스 체크 ─────────────────────────────────────────────────────────
+// 배포 검증/컨테이너 헬스체크용. 인증 없이 접근 가능하며 DB 연결까지 확인한다.
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', db: 'ok' });
+  } catch (e) {
+    res.status(503).json({ status: 'degraded', db: 'error' });
+  }
+});
 
 // ── 관리자 인증 ───────────────────────────────────────────────────────
 function requireAdminAuth(req, res, next) {
@@ -275,18 +333,18 @@ app.get('/api/admin/applications', requireAdminAuth, async (req, res) => {
   }
 });
 
-// ── Start / Export ────────────────────────────────────────────────────
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  initDB()
-    .catch(e => console.warn('⚠️  DB 초기화 실패 (DATABASE_URL 확인):', e.message))
-    .finally(() => {
-      app.listen(PORT, () => {
-        console.log(`\n✅ 서버 실행 중: http://localhost:${PORT}`);
-        console.log(`⚙️  관리자 페이지: http://localhost:${PORT}/admin.html\n`);
-      });
+// ── Start ─────────────────────────────────────────────────────────────
+// DB 초기화에 실패해도 프로세스는 뜬다. 그래야 /api/health가 503으로
+// 원인을 보고할 수 있고, 배포 파이프라인이 이를 실패로 판정할 수 있다.
+const PORT = parseInt(process.env.PORT || '3000', 10);
+
+initDB()
+  .catch(e => console.warn('⚠️  DB 초기화 실패 (DB 접속 설정 확인):', e.message))
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`\n✅ 서버 실행 중: http://localhost:${PORT}`);
+      console.log(`⚙️  관리자 페이지: http://localhost:${PORT}/admin.html\n`);
     });
-} else {
-  initDB().catch(console.error);
-  module.exports = app;
-}
+  });
+
+module.exports = app;
