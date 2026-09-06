@@ -1,0 +1,31 @@
+# WAS EC2 의 /app/CHANGEME_SLUG/docker/docker-compose.yml 에 배치한다.
+# 실행: ECR_IMAGE=<불변 태그> docker compose -p CHANGEME_SLUG -f docker/docker-compose.yml up -d
+#
+# 운영 PostgreSQL 은 이 파일에 정의하지 않는다. RDS 를 .env.production 으로 가리킨다.
+
+name: CHANGEME_SLUG
+
+services:
+  app:
+    image: ${ECR_IMAGE:?ECR_IMAGE is required}
+    container_name: CHANGEME_SLUG
+    env_file:
+      - /app/CHANGEME_SLUG/.env.production
+    ports:
+      # Nginx 가 같은 호스트면 127.0.0.1 로 묶는다.
+      # Nginx 가 별도 EC2 면 WAS 프라이빗 IP 로 묶고, 보안그룹에서
+      # Nginx 보안그룹만 이 포트에 접근하도록 제한한다.
+      - "CHANGEME_PRIVATE_BIND:CHANGEME_HOST_PORT:3000"
+    restart: unless-stopped
+    healthcheck:
+      # node:22-alpine 에는 curl 이 없고 BusyBox wget 만 있다.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 4
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "7"

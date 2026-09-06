@@ -1,0 +1,144 @@
+# ECR 로 이미지를 밀고, SSM 으로 WAS EC2 에서 docker compose 를 올린다.
+# 러너에서 SSH 하지 않는다.
+#
+# 필요한 GitHub Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, EC2_INSTANCE_ID
+# 비밀이 아닌 값은 아래 env: 블록에 둔다 (조직 컨벤션).
+#
+# 테스트 잡은 없다. 이 리포지토리에는 테스트 스위트가 없다.
+# 테스트를 추가하면 deploy 앞에 실제 PostgreSQL service 컨테이너를 붙인
+# test 잡을 넣고 needs: test 로 연결할 것.
+
+name: Deploy to AWS
+
+# ── 트리거: 수동 실행 전용 ────────────────────────────────────────────
+# main 에 머지하거나 푸시해도 이 워크플로는 돌지 않는다.
+# Actions 탭 > "Deploy to AWS" > Run workflow 로만 실행된다.
+#
+# AWS Secrets 가 이미 등록되어 있으므로 push 트리거를 켜는 순간
+# 머지 즉시 실제 배포가 일어난다. 2026 이벤트는 종료 상태이므로 켜지 않는다.
+# 내년 재오픈 때는 DEPLOY.md 2절의 CHANGEME_* 를 전부 확정한 뒤
+# 아래 두 줄을 on: 아래에 추가한다.
+#
+#   push:
+#     branches: [main]
+#
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  # 조직은 앱마다 ECR 리포지토리를 만들지 않는다. 하나를 공유하고 태그 접두사로 구분한다.
+  ECR_REPOSITORY: CHANGEME_SHARED_ECR_REPOSITORY
+  APP_SLUG: CHANGEME_SLUG
+  APP_DIR: /app/CHANGEME_SLUG
+  COMPOSE_FILE: /app/CHANGEME_SLUG/docker/docker-compose.yml
+  HOST_PORT: "CHANGEME_HOST_PORT"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BUILD_TIME="$(date +'%Y%m%d-%H%M%S')"
+          RELEASE_TAG="${APP_SLUG}-${BUILD_TIME}-${SHORT_SHA}"
+          ECR_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${RELEASE_TAG}"
+
+          docker build -f docker/Dockerfile -t "$ECR_IMAGE" .
+          docker push "$ECR_IMAGE"
+
+          # 이동 태그는 편의용일 뿐 배포 참조로 쓰지 않는다.
+          MOVING_TAG="${ECR_REGISTRY}/${ECR_REPOSITORY}:${APP_SLUG}-latest"
+          docker tag "$ECR_IMAGE" "$MOVING_TAG"
+          docker push "$MOVING_TAG"
+
+          echo "ecr_image=$ECR_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "배포 대상 이미지: $ECR_IMAGE"
+
+      - name: Deploy to WAS via SSM
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          ECR_IMAGE: ${{ steps.build.outputs.ecr_image }}
+          INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+
+          # SSM 명령은 손으로 이스케이프한 JSON 대신 jq 로 만든다.
+          jq -n \
+            --arg image    "$ECR_IMAGE" \
+            --arg registry "$ECR_REGISTRY" \
+            --arg region   "$AWS_REGION" \
+            --arg dir      "$APP_DIR" \
+            --arg compose  "$COMPOSE_FILE" \
+            --arg slug     "$APP_SLUG" \
+            --arg port     "$HOST_PORT" \
+            '{commands: [
+              "set -eu",
+              ("aws ecr get-login-password --region " + ($region|@sh) + " | docker login --username AWS --password-stdin " + ($registry|@sh)),
+              ("docker pull " + ($image|@sh)),
+              ("cd " + ($dir|@sh)),
+              ("ECR_IMAGE=" + ($image|@sh) + " docker compose -p " + ($slug|@sh) + " -f " + ($compose|@sh) + " up -d --pull always"),
+              ("for i in $(seq 1 30); do if curl -fsS --max-time 8 http://127.0.0.1:" + $port + "/api/health >/dev/null; then echo health-ok; exit 0; fi; sleep 3; done; echo health-failed >&2; docker ps --filter name=" + ($slug|@sh) + "; docker logs --tail 100 " + ($slug|@sh) + " 2>&1 | tail -100; exit 1"),
+              "docker image prune -f"
+            ]}' > /tmp/ssm-parameters.json
+
+          # --comment 는 100자 제한이라 전체 이미지 URI 를 넣으면 호출이 실패한다. 태그만 넣는다.
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --timeout-seconds 600 \
+            --comment "${APP_SLUG} deploy ${ECR_IMAGE##*:}" \
+            --parameters "file:///tmp/ssm-parameters.json" \
+            --query 'Command.CommandId' --output text)
+          echo "SSM CommandId: $COMMAND_ID"
+
+          STATUS="Pending"
+          for _ in $(seq 1 120); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+              --query 'Status' --output text 2>/dev/null || echo "Pending")
+            case "$STATUS" in Success|Failed|Cancelled|TimedOut) break ;; esac
+            sleep 5
+          done
+
+          echo "----- stdout -----"
+          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query 'StandardOutputContent' --output text || true
+          echo "----- stderr -----"
+          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
+            --query 'StandardErrorContent' --output text || true
+
+          echo "SSM Status: $STATUS"
+          [ "$STATUS" = "Success" ]
+
+      - name: Rollback hint on failure
+        if: failure()
+        env:
+          RELEASE_TAG: ${{ steps.build.outputs.release_tag }}
+        run: |
+          echo "배포 실패. 직전 성공 태그로 롤백하려면 WAS EC2 에서:"
+          echo "  ECR_IMAGE=<registry>/${ECR_REPOSITORY}:<이전-태그> \\"
+          echo "    docker compose -p ${APP_SLUG} -f ${COMPOSE_FILE} up -d"
+          echo "이번 릴리스 태그: ${RELEASE_TAG:-(빌드 전 실패)}"
