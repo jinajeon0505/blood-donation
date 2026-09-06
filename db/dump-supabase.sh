@@ -50,6 +50,31 @@ else
     echo "또는 SUPABASE_DATABASE_URL 에 커넥션 스트링 전체를 넣으세요." >&2
     exit 1
   fi
+  # 커넥션 스트링 조각을 필드에 그대로 붙여 넣는 실수를 잡는다.
+  # libpq 는 호스트가 @ 또는 / 로 시작하면 유닉스 소켓 경로로 해석하기 때문에
+  # "Connection refused ... Is the server running locally" 라는 엉뚱한 오류가 난다.
+  hint_and_die() {
+    echo "오류: $1" >&2
+    echo "      PGHOST 에는 호스트 이름만 넣습니다. 예:" >&2
+    echo "        export PGHOST=aws-0-ap-southeast-1.pooler.supabase.com" >&2
+    echo "      커넥션 스트링을 통째로 쓰려면 SUPABASE_DATABASE_URL 을 쓰세요." >&2
+    exit 1
+  }
+  case "$PGHOST" in
+    *"://"*)  hint_and_die "PGHOST 에 URL 스킴이 들어 있습니다: [$PGHOST]" ;;
+    *@*)      hint_and_die "PGHOST 에 '@' 가 들어 있습니다: [$PGHOST]" ;;
+    /*)       hint_and_die "PGHOST 가 '/' 로 시작해 소켓 경로로 해석됩니다: [$PGHOST]" ;;
+    *:*)      hint_and_die "PGHOST 에 포트가 붙어 있습니다. 포트는 PGPORT 로: [$PGHOST]" ;;
+    */*)      hint_and_die "PGHOST 에 경로가 들어 있습니다: [$PGHOST]" ;;
+    *[![:print:]]*|*" "*) hint_and_die "PGHOST 에 공백/제어문자가 있습니다: [$PGHOST]" ;;
+  esac
+  case "$PGUSER" in
+    *@*|*:*)  hint_and_die "PGUSER 에 '@' 나 ':' 가 들어 있습니다: [$PGUSER]" ;;
+  esac
+  case "$PGPORT" in
+    ''|*[!0-9]*) hint_and_die "PGPORT 가 숫자가 아닙니다: [$PGPORT]" ;;
+  esac
+
   # 비밀번호는 프롬프트로 받는다. 셸 히스토리에 남지 않는다.
   if [ -z "${PGPASSWORD:-}" ]; then
     printf 'DB 비밀번호 (%s@%s): ' "$PGUSER" "$PGHOST" >&2
