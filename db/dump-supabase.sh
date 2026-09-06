@@ -27,8 +27,48 @@ set -euo pipefail
 
 # ── 접속 정보 확정 ────────────────────────────────────────────────────
 # URL 이 있으면 URL 모드, 없으면 개별 PG* 필드 모드로 동작한다.
+
+# 둘 다 설정되어 있으면 어느 쪽이 쓰이는지 불분명하다. 예전 시도에서 남은
+# SUPABASE_DATABASE_URL 이 방금 고친 PGHOST 를 조용히 덮어쓰면, 값을 고쳐도
+# 같은 오류가 반복되어 원인을 찾기 어렵다. 명시적으로 하나만 남기게 한다.
+if [ -n "${SUPABASE_DATABASE_URL:-}" ] && [ -n "${PGHOST:-}" ]; then
+  echo "오류: SUPABASE_DATABASE_URL 과 PGHOST 가 둘 다 설정되어 있습니다." >&2
+  echo "      둘 중 하나만 남기세요." >&2
+  echo >&2
+  echo "  개별 필드로 쓰려면 :  unset SUPABASE_DATABASE_URL" >&2
+  echo "  URL 로 쓰려면      :  unset PGHOST PGPORT PGUSER PGDATABASE" >&2
+  exit 1
+fi
+
 if [ -n "${SUPABASE_DATABASE_URL:-}" ]; then
   MODE=url
+
+  # URL 형식 검증. 특히 '@' 개수 — 비밀번호에 @ 가 인코딩 없이 들어가거나
+  # 템플릿의 @ 가 중복되면 libpq 가 호스트를 소켓 경로로 오인해서
+  # "Is the server running locally" 라는 엉뚱한 오류를 낸다.
+  case "$SUPABASE_DATABASE_URL" in
+    postgres://*|postgresql://*) ;;
+    *)
+      echo "오류: SUPABASE_DATABASE_URL 이 postgresql:// 로 시작하지 않습니다." >&2
+      exit 1
+      ;;
+  esac
+  _rest="${SUPABASE_DATABASE_URL#*://}"
+  _authority="${_rest%%/*}"
+  _ats="$(printf '%s' "$_authority" | tr -cd '@' | wc -c | tr -d ' ')"
+  if [ "$_ats" != "1" ]; then
+    echo "오류: URL 의 '@' 가 ${_ats}개입니다. 정확히 1개여야 합니다." >&2
+    echo "      형식: postgresql://<유저>:<비밀번호>@<호스트>:5432/postgres" >&2
+    if [ "$_ats" -gt 1 ]; then
+      echo "      비밀번호에 '@' 가 있으면 %40 으로 인코딩해야 합니다." >&2
+      echo "      인코딩이 번거로우면 개별 필드 방식을 쓰세요:" >&2
+      echo "        unset SUPABASE_DATABASE_URL" >&2
+      echo "        export PGHOST=... PGUSER=... PGDATABASE=postgres" >&2
+    fi
+    exit 1
+  fi
+  EFFECTIVE_HOST="${_authority##*@}"
+
   export PGURL="$SUPABASE_DATABASE_URL"
   PORT_CHECK="$SUPABASE_DATABASE_URL"
   DOCKER_ENV=(--env PGURL)
@@ -85,6 +125,7 @@ else
     [ -n "$PGPASSWORD" ] || { echo "오류: 비밀번호가 비어 있습니다." >&2; exit 1; }
   fi
   export PGHOST PGPORT PGUSER PGDATABASE PGPASSWORD
+  EFFECTIVE_HOST="$PGHOST:$PGPORT"
   PORT_CHECK=":$PGPORT/"
   DOCKER_ENV=(--env PGHOST --env PGPORT --env PGUSER --env PGDATABASE --env PGPASSWORD --env PGSSLMODE)
 fi
@@ -121,13 +162,16 @@ pg_dump_run() {
            else exec pg_dump "$@"; fi' sh "$@"
 }
 
-echo "==> 연결 확인"
+echo "==> 연결 확인 (모드=$MODE, 대상=$EFFECTIVE_HOST)"
 if ! psql_in -At <<'SQL' | sed 's/^/    /'
 select current_database();
 select version();
 SQL
 then
-  echo "연결 실패. 호스트/유저/비밀번호와 IPv4 접근 가능 여부를 확인하세요." >&2
+  echo "연결 실패 (대상=$EFFECTIVE_HOST)." >&2
+  echo "  * \"Is the server running locally\" 가 보이면 호스트가 소켓 경로로 해석된 것이다." >&2
+  echo "    PGHOST 앞의 '@' 나 URL 의 '@' 중복을 확인하세요." >&2
+  echo "  * 인증 실패면 비밀번호를, 타임아웃이면 IPv4 접근 가능 여부를 확인하세요." >&2
   exit 1
 fi
 

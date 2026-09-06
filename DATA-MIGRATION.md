@@ -70,7 +70,13 @@ export PGDATABASE=postgres
 ```
 
 비밀번호에 `@ : / ? #` 가 들어 있으면 URL 에서 퍼센트 인코딩해야 한다
-(`@` → `%40`, `#` → `%23`). 이게 번거로우면 (A) 를 쓴다.
+(`@` → `%40`, `#` → `%23`).
+
+**비밀번호에 `@` 가 있으면 (A) 를 쓰는 편이 안전하다.** libpq 는 URL 의
+**첫 번째** `@` 에서 사용자 정보와 호스트를 나눈다. 비밀번호의 `@` 를
+인코딩하지 않으면 호스트가 `@호스트명` 이나 `일부@호스트명` 으로 잘려
+"Is the server running locally" 같은 원인과 무관해 보이는 오류가 난다.
+(A) 는 값을 그대로 넘기므로 인코딩이 아예 필요 없다.
 
 `backup/<타임스탬프>/` 에 다음이 생성된다:
 
@@ -93,6 +99,9 @@ export PGDATABASE=postgres
 
 | 증상 | 원인 / 대응 |
 |---|---|
+| `Is the server running locally and accepting connections on that socket?` | 호스트가 소켓 경로로 해석된 것. 비밀번호의 `@` 가 URL 을 깨뜨렸거나 `PGHOST` 앞에 `@` 가 붙었다. **(A) 개별 필드 방식으로 바꾸면 해결된다** |
+| 값을 고쳐도 같은 오류가 반복됨 | 예전 시도의 `SUPABASE_DATABASE_URL` 이 셸에 남아 `PGHOST` 를 덮어쓰는 중. `unset SUPABASE_DATABASE_URL` |
+| `could not translate host name "...@..."` | 비밀번호 중간의 `@` 가 인코딩되지 않음. (A) 방식으로 바꾸거나 `%40` 으로 인코딩 |
 | `server version mismatch` | Supabase 가 더 최신. `PG_IMAGE=postgres:18-alpine ./db/dump-supabase.sh` |
 | `could not connect` / 타임아웃 | Direct connection 이 IPv6 전용. Session pooler 문자열로 바꾼다 |
 | `password authentication failed` | 비밀번호 퍼센트 인코딩 확인. 대시보드에서 재설정 가능 |
